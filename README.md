@@ -35,8 +35,7 @@ The controller is what you can build with this repo. The controller uses 35mm ph
 
 When you power up the Plastic Player the Espruino connects to your WiFi network and pulls down data in the form of a JSON file — I use [Airtable](http://airtable.com) as a simple solution but you could use anything, even a flat text file, as long as it's JSON formatted in the correct way. This JSON file contains a list of NFC tag ids with matching Spotify URIs — these are your albums. When you place an album (slide) into Plastic Player, the Espruino sees the NFC tag and looks-up that tag in the JSON file.  When it finds a match it sends the corresponding Spotify URI to the Musicbox over wifi and then starts that track list playing. Plastic Player also includes controls for play/pause and skip (next track).
 
-Raspberry Pi
-------------
+# Raspberry Pi
 
 Install Musicbox on a Raspberry Pi following the instructions on the Musicbox site including entering your Spotify details. Once you have this set up, check you can connect to it via your web browser — usually via musicbox.local. 
 
@@ -45,47 +44,96 @@ Make sure to note down the ip address of the Raspberry Pi as you'll need to ente
 That’s all you need to do with the Raspberry Pi. 
 
 
-Espruino
---------
+## Pinout
 
-Solder the Espruino board in the centre of the Perma-Proto board.
+NOTE: This renders better with Mermaid 11.0.2:
 
-Connect the - and + rails on the Perma-Proto to the 3.3v terminal and the GND terminal respectively.
+```mermaid
+---
+config:
+  themeVariables:
+    fontSize: 12px
+  flowchart:
+    nodeSpacing: 1
+    rankSpacing: 1
+    
+---
+flowchart RL
 
-Wire the components to the Espruino / Perma-proto using the following pin connections. 
+graph_1~~~graph_2
+subgraph graph_1[ ]
+  direction LR
 
-| OLED | Espruino Wifi |
-|------|---------------|
-| CS   | GND           |
-| RST  | b7            |
-| DC   | a0            |
-| CLK  | b5            |
-| DATA | b6            |
-| 3.3  | 3.3           |
-| GND  | GND           |
+  subgraph raspi2[Raspberry Pi 4B continued]
+    GND_1[GND]
+    3V3_1[3V3]
+    GPIO_2
+    GPIO_3
+    GPIO_26
+    GND_3[GND]
+    GND_4[GND]
+    GPIO_17
+  end
 
-| Neo Pixel | Espruino Wifi |
-|-----------|---------------|
-| +         | 3.3           |
-| G         | GND           |
-| In        | b15           |
+  subgraph Left button
+    BTN_LEFT_1[+]
+    BTN_LEFT_2[-]
+  end
+  GPIO_26-->BTN_LEFT_1
+  GND_4-->BTN_LEFT_2
 
-| NFC  | Espruino Wifi |
-|------|---------------|
-| 3.3  | 3.3           |
-| MOSI | b3            |
-| SSEL | b10           |
-| GND  | GND           |
+  subgraph Right button
+    BTN_RIGHT_1[+]
+    BTN_RIGHT_2[-]
+  end
+  GPIO_17-->BTN_RIGHT_1
+  GND_3-->BTN_RIGHT_2
 
-| Pause Button | Espruino Wifi |
-|--------------|---------------|
-| +            | 3.3           |
-| -            | B1            |
+  subgraph Display
+    VCC_DISPLAY[Vcc]
+    SDA
+    SCL
+    GND_DISPLAY[GND]
+  end
+  3V3_1-->VCC_DISPLAY
+  GND_1-->GND_DISPLAY
+  GPIO_2-->SDA
+  GPIO_3-->SCL
+end
 
-| Next Button | Espruino Wifi |
-|-------------|---------------|
-| +           | 3.3           |
-| -           | B14           |
+subgraph graph_2[ ]
+  direction LR
+
+  subgraph raspi[Raspberry Pi 4B]
+    GPIO_8
+    GPIO_9
+    GPIO_10
+    GPIO_11
+    GPIO_25
+    3V3_2[3V3]
+    GND_2[GND]
+  end
+  subgraph RFID
+    CS
+    MISO
+    MOSI
+    SCLK
+    RST
+    VCC_RFID[Vcc]
+    GND_RFID[GND]
+  end
+  GPIO_8 --> CS
+  GPIO_9 --> MISO
+  GPIO_10 --> MOSI
+  GPIO_11 --> SCLK
+  GPIO_25 --> RST
+  3V3_2 --> VCC_RFID
+  GND_2 --> GND_RFID
+end
+
+style graph_1 stroke:none,fill:none
+style graph_2 stroke:none,fill:none
+```
 
 Code
 ----
