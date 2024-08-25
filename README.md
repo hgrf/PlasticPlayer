@@ -159,8 +159,37 @@ Once you have set up your target Raspberry Pi, you need to push some binaries:
 scp -r piduino/tools/arpi_bins/* <TARGET>:/usr/local/bin/
 ```
 
-Enclosure
----------
+## Installing spotifyd on the target
+
+```sh
+wget https://github.com/Spotifyd/spotifyd/releases/download/v0.3.5/spotifyd-linux-armhf-full.tar.gz
+tar xvf spotifyd-linux-armhf-full.tar.gz
+```
+
+Create `/etc/spotifyd.conf` with the following content (see also https://docs.spotifyd.rs/config/File.html):
+
+```
+use_mpris = true
+device_name = "PlasticPlayer3"
+cache_path = "/home/holger/spotifyd-cache"
+# The maximal size of the cache directory in bytes
+# The example value corresponds to ~ 1GB
+max_cache_size = 1000000000
+```
+
+NOTE: Login does not seem to work right now: https://github.com/Spotifyd/spotifyd/issues/1293
+
+You can test if the daemon works well in discovery mode and if the DBUS MPRIS interface is up using
+the following commands:
+
+```sh
+sudo apt install playerctl
+./spotifyd --no-daemon
+playerctl play
+playerctl pause
+```
+
+# Enclosure
 
 You can enclose this project in whatever you see fit but I've included the .stl files for you to use and either print at home of send to a service such as Shapeways to create the enclosure. Once you have that you can place the parts and then snap-fit the enclosure back together.
 
