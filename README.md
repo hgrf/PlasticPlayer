@@ -136,12 +136,28 @@ style graph_1 stroke:none,fill:none
 style graph_2 stroke:none,fill:none
 ```
 
-Code
-----
+# Setting up the software
 
-Download the Javascript code from this repo. Plug-in your Espruino and using the Espruino Chrome app launch the Editor and load in the code you've just downloaded. Alter the wifi network name and password details to match your network settings and change the host to be the ip address you noted down earlier that locates the Raspberry Pi on your network. Change the PATH to be the web address of your json source.
+On MacOS:
 
-Transfer the code to your Espruino. Hopefully it should start up and work as expected.
+```
+	brew install arduino-cli
+  make build
+```
+
+NOTE: For Linux, you will have to adapt the download link of the toolchain in the Makefile.
+
+Then, download the toolchain from https://github.com/me-no-dev/RasPiArduino/releases/tag/0.0.1.
+
+Since this is a 32-bit toolchain, you will also need a 32-bit OS image. You can select "Raspberry
+Pi OS Lite (32-bit)" in the Raspberry Pi Imager tool.
+
+Once you have set up your target Raspberry Pi, you need to push some binaries:
+
+```sh
+# TODO: check if this is neccesary
+scp -r piduino/tools/arpi_bins/* <TARGET>:/usr/local/bin/
+```
 
 Enclosure
 ---------

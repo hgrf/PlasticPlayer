@@ -1,0 +1,25 @@
+diff --git a/src/ssd1306_hal/arduino/io.h b/src/ssd1306_hal/arduino/io.h
+index f121419d..0a6ba4ad 100644
+--- a/src/ssd1306_hal/arduino/io.h
++++ b/src/ssd1306_hal/arduino/io.h
+@@ -35,6 +35,9 @@
+ #elif defined(ESP8266) || defined(ESP32) || defined(ESP31B)  // esp arduino support
+     #include <Arduino.h>
+     #include <pgmspace.h>
++#elif defined(RASPI)
++    #include <Arduino.h>
++    #include <pgmspace.h>
+ #else  // AVR support
+     #include <Arduino.h>
+     #if !defined(ARDUINO_ARCH_SAMD) && defined(__AVR__)
+@@ -200,6 +203,10 @@
+     /** The macro is defined when SPI library is available */
+     #define CONFIG_PLATFORM_SPI_AVAILABLE
+ 
++#elif defined(RASPI)
++    #define CONFIG_PLATFORM_I2C_AVAILABLE
++    #define SSD1306_WIRE_CLOCK_CONFIGURABLE
++
+ #else
+     /** The macro is defined when i2c Wire library is available */
+     #define CONFIG_SOFTWARE_I2C_AVAILABLE
