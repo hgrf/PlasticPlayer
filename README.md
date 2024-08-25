@@ -5,22 +5,18 @@ Plastic Player
 
 An NFC based controller for Spotify using the Mopidy Server. This isn't a step by step instructables style build guide but hopefully there's enough information here to build your own version. Knowledge of building stuff like this, soldering and understanding JSON files and the like would be good.
 
-Materials
----------
+# Materials
 
-* [ Raspberry Pi ](http://raspberrypi.org)
-* [ Pi Musicbox ](http://www.pimusicbox.com)
-* [ Espruino Wifi ](https://www.espruino.com)
-* Adafruit [ 128 x 32 SPI OLED ](https://www.adafruit.com/product/661)
-* [ PN532 NFC breakout ](https://www.espruino.com/PN532)
-* 2 x [ Sanwa Arcade Buttons ](https://www.arcadeworlduk.com/products/Sanwa-OBSC-24-C-Arcade-Button.html)
-* [ Adafruit half-sized Perma Proto board ](https://www.adafruit.com/product/571)
-* [ Adafruit Neopixel breadboard ](https://www.adafruit.com/product/1558)
-* [Panel Mount Micro USB](https://uk.rs-online.com/web/p/micro-usb-connectors/9125114/)
-* 3D printed enclosure (available on this repo)
-* A Pro Spotify account
-* [ NFC Stickers ](http://zipnfc.com/nfc-stickers/nfc-sticker-midas-tiny-ntag213.html)
-* 35mm Blank Slides - via Ebay or other suppliers
+* **Raspberry Pi 4B** | [ CAD ](https://grabcad.com/library/raspberry-pi-4-model-b-1) | [ Amazon ](https://www.amazon.fr/dp/B07TGBLK33/)
+* **128 x 64 I2C OLED**, [ CAD ](https://grabcad.com/library/ssd1306-oled-display-128x64-1) , [ Amazon ](https://www.amazon.fr/dp/B0CN96XB5Y)
+  * _TODO_: find SSD1306 model with correct screw spacings
+  * https://grabcad.com/library/i2c-0-96-oled-ssd1306-display-1     <- NOTE: this model's screw spacing is much closer to my module, but the height seems larger
+* [ **Joy-IT RFID module** ](https://joy-it.net/en/products/SBC-RFID-RC522) | [ CAD ](https://grabcad.com/library/rfid-rc5222-1) | [ Amazon ](https://www.amazon.fr/dp/B07B3N1WTL)
+  * _TODO_: here too it seems the screw spacing does not 100% correspond
+* 2 x **Sanwa Arcade Buttons** | [ CAD ](https://grabcad.com/library/sanwa-obsf-24-arcade-button-1) | [ Amazon ](https://www.amazon.fr/dp/B075DCB7LT)
+* **NFC Stickers** | [ Amazon ](https://www.amazon.fr/dp/B0BVFM8YVD)
+* 3D printed enclosure and slides (available on this repo)
+* a Spotify Premium account
 
 How it Works
 ------------
