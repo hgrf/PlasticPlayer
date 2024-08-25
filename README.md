@@ -1,9 +1,14 @@
-Plastic Player
---------------
+# Plastic Player 3
 
-![Image of Plastic Player showing John Coltrane being played](plasticplayer.jpg?raw=true)
+|<img src="plasticplayer.jpg" width="400px">|
+|:---:|
+| The original Plastic Player 2 |
 
-An NFC based controller for Spotify using the Mopidy Server. This isn't a step by step instructables style build guide but hopefully there's enough information here to build your own version. Knowledge of building stuff like this, soldering and understanding JSON files and the like would be good.
+|<img src="capture.png" width="400px">|
+|:---:|
+| A 3D model of Plastic Player 3 |
+
+This is a remake of [Plastic Player 2](https://brendandawes.com/projects/plasticplayer2) ([repo](https://github.com/brendandawes/PlasticPlayer)), an NFC based controller for Spotify. This isn't a step by step instructables style build guide but hopefully there's enough information here to build your own version. Knowledge of building stuff like this, soldering and understanding Linux, software compilation and the like would be good.
 
 # Materials
 
