@@ -46,14 +46,16 @@ build-playerctl: deps
 		&& \
 	meson compile -C build
 
-CFLAGS= \
-	-I{build.path}/../libs/playerctl \
-	-c -pipe -std=c99
-CXXFLAGS= \
+INCLUDE= \
 	-I{build.path}/../libs/playerctl \
 	-I{build.path}/../libs/playerctl/build \
 	-I{build.path}/../deps/sysroot/usr/include/glib-2.0 \
-	-I{build.path}/../deps/sysroot/usr/lib/arm-linux-gnueabihf/glib-2.0/include \
+	-I{build.path}/../deps/sysroot/usr/lib/arm-linux-gnueabihf/glib-2.0/include
+CFLAGS= \
+	$(INCLUDE) \
+	-c -pipe -std=c99
+CXXFLAGS= \
+	$(INCLUDE) \
 	-c -pipe -std=c++11 -fno-rtti -DNDEF_USE_SERIAL 
 LDFLAGS= \
 	--sysroot={build.path}/../deps/sysroot\
