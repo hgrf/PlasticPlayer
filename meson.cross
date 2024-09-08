@@ -1,0 +1,16 @@
+[binaries]
+c = '/Users/holger/PlasticPlayer/deps/packages/RaspberryPi/piduino/tools/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc'
+cpp = '/Users/holger/PlasticPlayer/deps/packages/RaspberryPi/piduino/tools/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++'
+ar = '/Users/holger/PlasticPlayer/deps/packages/RaspberryPi/piduino/tools/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-ar'
+strip = '/Users/holger/PlasticPlayer/deps/packages/RaspberryPi/piduino/tools/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-strip'
+pkgconfig = '/Users/holger/PlasticPlayer/deps/packages/RaspberryPi/piduino/tools/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-pkg-config'
+cmake='/opt/homebrew/bin/cmake'
+
+[properties]
+sys_root = '/Users/holger/PlasticPlayer/deps/sysroot'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'arm'
+cpu = 'arm'
+endian = 'little'
