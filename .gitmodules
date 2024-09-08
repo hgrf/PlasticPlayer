@@ -1,0 +1,12 @@
+[submodule "libs/playerctl"]
+	path = libs/playerctl
+	url = https://github.com/altdesktop/playerctl.git
+[submodule "libs/MFRC522-spi-i2c-uart-async"]
+	path = libs/MFRC522-spi-i2c-uart-async
+	url = https://github.com/MakerSpaceLeiden/rfid.git
+[submodule "libs/ssd1306"]
+	path = libs/ssd1306
+	url = https://github.com/lexus2k/ssd1306.git
+[submodule "libs/NDEF"]
+	path = libs/NDEF
+	url = https://github.com/hgrf/NDEF.git
