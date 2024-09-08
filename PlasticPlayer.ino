@@ -9,7 +9,6 @@
 #define RST_PIN 25
 #define SS_PIN 8
 
-// TODO: debug left pin hardware
 #define BUTTON_LEFT_PIN 26
 #define BUTTON_RIGHT_PIN 17
 
@@ -21,6 +20,8 @@ MFRC522 mfrc522 = MFRC522(&spiDevice);
 NfcAdapter nfc = NfcAdapter(&mfrc522);
 
 SpotifyPlayer player;
+
+unsigned long lastAlbumChange;
 
 void nfcThreadEntry()
 {
@@ -50,6 +51,9 @@ void nfcThreadEntry()
           {
             uri.replace("https://open.spotify.com/", "spotify:");
             uri.replace("/", ":");
+            ssd1306_clearScreen();
+            lastAlbumChange = millis();
+            ssd1306_printFixed(0, 0, "Loading album...", STYLE_NORMAL);
             player.process(SpotifyCommand(SpotifyCommand::PLAY, uri));
           }
         }
@@ -104,6 +108,20 @@ void setup()
 void loop()
 {
   String uri;
+
+  if (lastAlbumChange != 0)
+  {
+    if (millis() - lastAlbumChange < 1000)
+    {
+      return;
+    }
+    else
+    {
+      lastAlbumChange = 0;
+      ssd1306_clearScreen();
+      ssd1306_showMenu(&menu);
+    }
+  }
 
   if (btnLeft.hasEvent() && btnLeft.waitForEvent() == Button::PRESS)
   {
