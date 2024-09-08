@@ -123,6 +123,43 @@ void loop()
     }
   }
 
+  auto status = player.getStatus();
+  GError *err = NULL;
+  PlayerctlPlayer *_player = player.getPlayer(&err);
+  if (_player != NULL)
+  {
+    gchar *artist = playerctl_player_get_artist(_player, &err);
+    gchar *album = playerctl_player_get_album(_player, &err);
+    gchar *title = playerctl_player_get_title(_player, &err);
+
+    if (title != NULL)
+    {
+      ssd1306_printFixed(16, 40, title, STYLE_NORMAL);
+    }
+    else
+    {
+      ssd1306_printFixed(16, 40, "            ", STYLE_NORMAL);
+    }
+
+    g_free(artist);
+    g_free(title);
+    g_free(album);
+    g_object_unref(_player);
+  }
+
+  // switch (status)
+  // {
+  // case PLAYERCTL_PLAYBACK_STATUS_PLAYING:
+  //   ssd1306_printFixed(0, 0, "Playing", STYLE_NORMAL);
+  //   break;
+  // case PLAYERCTL_PLAYBACK_STATUS_PAUSED:
+  //   ssd1306_printFixed(0, 0, "Paused", STYLE_NORMAL);
+  //   break;
+  // case PLAYERCTL_PLAYBACK_STATUS_STOPPED:
+  //   ssd1306_printFixed(0, 0, "Stopped", STYLE_NORMAL);
+  //   break;
+  // }
+
   if (btnLeft.hasEvent() && btnLeft.waitForEvent() == Button::PRESS)
   {
     ssd1306_menuDown(&menu);
