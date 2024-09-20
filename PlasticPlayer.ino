@@ -60,7 +60,7 @@ void nfcThreadEntry()
             ssd1306_clearScreen();
             lastAlbumChange = millis();
             ssd1306_printFixed(0, 0, "Loading album...", STYLE_NORMAL);
-            player.process(SpotifyCommand(SpotifyCommand::PLAY, uri));
+            player.pushCommand(SpotifyCommand(SpotifyCommand::PLAY, std::string(uri.c_str())));
           }
         }
       }
@@ -72,8 +72,6 @@ void nfcThreadEntry()
 
 void setup()
 {
-  player.begin();
-
   // c.f. https://github.com/me-no-dev/RasPiArduino/issues/101
   // NOTE: this stuff all dates back to 2019, is there no more recent option?
   btnLeft.begin();
@@ -105,28 +103,7 @@ void setup()
 void showStatusScreen()
 {
   auto status = player.getStatus();
-  GError *err = NULL;
-  PlayerctlPlayer *_player = player.getPlayer(&err);
-  if (_player != NULL)
-  {
-    gchar *artist = playerctl_player_get_artist(_player, &err);
-    gchar *album = playerctl_player_get_album(_player, &err);
-    gchar *title = playerctl_player_get_title(_player, &err);
-
-    if (title != NULL)
-    {
-      ssd1306_printFixed(16, 40, title, STYLE_NORMAL);
-    }
-    else
-    {
-      ssd1306_printFixed(16, 40, "            ", STYLE_NORMAL);
-    }
-
-    g_free(artist);
-    g_free(title);
-    g_free(album);
-    g_object_unref(_player);
-  }
+  ssd1306_printFixed(0, 40, status.title.c_str(), STYLE_NORMAL);
 }
 
 void loop()
@@ -161,7 +138,8 @@ void loop()
 
   bool menuWasVisible = menu.isVisible();
   menu.process();
-  if (!menu.isVisible()) {
+  if (!menu.isVisible())
+  {
     showStatusScreen();
   }
 }

@@ -40,13 +40,13 @@ void MenuScreen::select()
     switch (menu.selection)
     {
     case 0:
-        mPlayer.process(SpotifyCommand(SpotifyCommand::PLAY_PAUSE));
+        mPlayer.pushCommand(SpotifyCommand(SpotifyCommand::PLAY_PAUSE));
         break;
     case 1:
-        mPlayer.process(SpotifyCommand(SpotifyCommand::NEXT));
+        mPlayer.pushCommand(SpotifyCommand(SpotifyCommand::NEXT));
         break;
     case 2:
-        mPlayer.process(SpotifyCommand(SpotifyCommand::PREVIOUS));
+        mPlayer.pushCommand(SpotifyCommand(SpotifyCommand::PREVIOUS));
         break;
     case 3:
         break;
