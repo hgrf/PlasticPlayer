@@ -1,0 +1,16 @@
+[Unit]
+Description=spotifyd system service
+
+[Service]
+Type=simple
+User=holger
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
+ExecStart=/usr/bin/spotifyd --no-daemon
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=spotifyd
+
+[Install]
+WantedBy=multi-user.target

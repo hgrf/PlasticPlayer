@@ -1,0 +1,14 @@
+[Unit]
+Description=Plastic Player service
+
+[Service]
+Type=simple
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
+ExecStart=/usr/bin/plasticplayer
+Restart=on-failure
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=plasticplayer
+
+[Install]
+WantedBy=multi-user.target

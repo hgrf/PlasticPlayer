@@ -1,0 +1,11 @@
+[Unit]
+Description=Show bootloader on OLED display
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/bootlogo
+Restart=on-failure
+
+[Install]
+WantedBy=sysinit.target
