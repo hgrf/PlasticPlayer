@@ -6,6 +6,7 @@
 #include "src/button.h"
 #include "src/led.h"
 #include "src/player.h"
+#include "src/screens/menu.h"
 
 #define RST_PIN 25
 #define SS_PIN 8
@@ -24,6 +25,7 @@ MFRC522 mfrc522 = MFRC522(&spiDevice);
 NfcAdapter nfc = NfcAdapter(&mfrc522);
 
 SpotifyPlayer player;
+MenuScreen menu(player, btnLeft, btnRight);
 
 unsigned long lastAlbumChange;
 
@@ -68,16 +70,6 @@ void nfcThreadEntry()
   }
 }
 
-SAppMenu menu;
-
-char *menuItems[] =
-    {
-        "Play/Pause",
-        "Next",
-        "Previous",
-        "Bluetooth",
-};
-
 void setup()
 {
   player.begin();
@@ -104,31 +96,14 @@ void setup()
   ssd1306_setFixedFont(ssd1306xled_font6x8);
   ssd1306_clearScreen();
 
-  ssd1306_createMenu(&menu, (const char **)menuItems, sizeof(menuItems) / sizeof(char *));
-  ssd1306_showMenu(&menu);
+  menu.show();
 
   std::thread nfcThread(nfcThreadEntry);
   nfcThread.detach();
 }
 
-void loop()
+void showStatusScreen()
 {
-  String uri;
-
-  if (lastAlbumChange != 0)
-  {
-    if (millis() - lastAlbumChange < 1000)
-    {
-      return;
-    }
-    else
-    {
-      lastAlbumChange = 0;
-      ssd1306_clearScreen();
-      ssd1306_showMenu(&menu);
-    }
-  }
-
   auto status = player.getStatus();
   GError *err = NULL;
   PlayerctlPlayer *_player = player.getPlayer(&err);
@@ -152,6 +127,24 @@ void loop()
     g_free(album);
     g_object_unref(_player);
   }
+}
+
+void loop()
+{
+  String uri;
+
+  if (lastAlbumChange != 0)
+  {
+    if (millis() - lastAlbumChange < 1000)
+    {
+      return;
+    }
+    else
+    {
+      lastAlbumChange = 0;
+      showStatusScreen();
+    }
+  }
 
   // switch (status)
   // {
@@ -166,27 +159,9 @@ void loop()
   //   break;
   // }
 
-  if (btnLeft.hasEvent() && btnLeft.waitForEvent() == Button::PRESS)
-  {
-    ssd1306_menuDown(&menu);
-    ssd1306_updateMenu(&menu);
-  }
-
-  if (btnRight.hasEvent() && btnRight.waitForEvent() == Button::PRESS)
-  {
-    switch (menu.selection)
-    {
-    case 0:
-      player.process(SpotifyCommand(SpotifyCommand::PLAY_PAUSE));
-      break;
-    case 1:
-      player.process(SpotifyCommand(SpotifyCommand::NEXT));
-      break;
-    case 2:
-      player.process(SpotifyCommand(SpotifyCommand::PREVIOUS));
-      break;
-    case 3:
-      break;
-    }
+  bool menuWasVisible = menu.isVisible();
+  menu.process();
+  if (!menu.isVisible()) {
+    showStatusScreen();
   }
 }
