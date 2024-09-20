@@ -28,13 +28,9 @@ SpotifyPlayer::~SpotifyPlayer()
 
 SpotifyPlayerStatus SpotifyPlayer::getStatus()
 {
-    SpotifyPlayerStatus status;
     std::lock_guard<std::mutex> lock(mMutex);
-    status.status = SpotifyPlayerStatus::DISCONNECTED;
-    if (mImpl->mPlayer == NULL)
-    {
-        return status;
-    }
+    SpotifyPlayerStatus status = mStatus;
+    return status;
 }
 
 void SpotifyPlayer::pushCommand(const SpotifyCommand &cmd)
@@ -141,16 +137,37 @@ void SpotifyPlayer::threadEntry()
                                                                 ? error->message
                                                                 : "unknown error");
             }
-            else
-            {
-                gchar *artist = playerctl_player_get_artist(mImpl->mPlayer, &error);
-                gchar *album = playerctl_player_get_album(mImpl->mPlayer, &error);
-                gchar *title = playerctl_player_get_title(mImpl->mPlayer, &error);
+        }
 
-                g_free(artist);
-                g_free(title);
-                g_free(album);
+        if (mImpl->mPlayer != NULL) {
+            PlayerctlPlaybackStatus status = PLAYERCTL_PLAYBACK_STATUS_STOPPED;
+            g_object_get(mImpl->mPlayer, "playback-status", &status, NULL);
+            gchar *artist = playerctl_player_get_artist(mImpl->mPlayer, &error);
+            gchar *album = playerctl_player_get_album(mImpl->mPlayer, &error);
+            gchar *title = playerctl_player_get_title(mImpl->mPlayer, &error);
+
+            {
+                std::lock_guard<std::mutex> lock(mMutex);
+                switch (status)
+                {
+                case PLAYERCTL_PLAYBACK_STATUS_PLAYING:
+                    mStatus.status = SpotifyPlayerStatus::PLAYING;
+                    break;
+                case PLAYERCTL_PLAYBACK_STATUS_PAUSED:
+                    mStatus.status = SpotifyPlayerStatus::PAUSED;
+                    break;
+                case PLAYERCTL_PLAYBACK_STATUS_STOPPED:
+                    mStatus.status = SpotifyPlayerStatus::STOPPED;
+                    break;
+                }
+                mStatus.artist = artist;
+                mStatus.album = album;
+                mStatus.title = title;
             }
+
+            g_free(artist);
+            g_free(title);
+            g_free(album);
         }
 
         {

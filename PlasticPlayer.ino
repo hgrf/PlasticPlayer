@@ -7,6 +7,7 @@
 #include "src/led.h"
 #include "src/player.h"
 #include "src/screens/menu.h"
+#include "src/screens/status.h"
 
 #define RST_PIN 25
 #define SS_PIN 8
@@ -26,6 +27,7 @@ NfcAdapter nfc = NfcAdapter(&mfrc522);
 
 SpotifyPlayer player;
 MenuScreen menu(player, btnLeft, btnRight);
+StatusScreen statusScreen(player);
 
 unsigned long lastAlbumChange;
 
@@ -92,18 +94,11 @@ void setup()
   ssd1306_flipVertical(1);
   ssd1306_flipHorizontal(1);
   ssd1306_setFixedFont(ssd1306xled_font6x8);
-  ssd1306_clearScreen();
 
-  menu.show();
+  statusScreen.show(true);
 
   std::thread nfcThread(nfcThreadEntry);
   nfcThread.detach();
-}
-
-void showStatusScreen()
-{
-  auto status = player.getStatus();
-  ssd1306_printFixed(0, 40, status.title.c_str(), STYLE_NORMAL);
 }
 
 void loop()
@@ -119,27 +114,16 @@ void loop()
     else
     {
       lastAlbumChange = 0;
-      showStatusScreen();
+      statusScreen.show(true);
     }
   }
 
-  // switch (status)
-  // {
-  // case PLAYERCTL_PLAYBACK_STATUS_PLAYING:
-  //   ssd1306_printFixed(0, 0, "Playing", STYLE_NORMAL);
-  //   break;
-  // case PLAYERCTL_PLAYBACK_STATUS_PAUSED:
-  //   ssd1306_printFixed(0, 0, "Paused", STYLE_NORMAL);
-  //   break;
-  // case PLAYERCTL_PLAYBACK_STATUS_STOPPED:
-  //   ssd1306_printFixed(0, 0, "Stopped", STYLE_NORMAL);
-  //   break;
-  // }
+  delay(100);
 
   bool menuWasVisible = menu.isVisible();
   menu.process();
   if (!menu.isVisible())
   {
-    showStatusScreen();
+    statusScreen.show(!menuWasVisible);
   }
 }
