@@ -4,6 +4,7 @@
 #include <ssd1306.h>
 
 #include "src/button.h"
+#include "src/led.h"
 #include "src/player.h"
 
 #define RST_PIN 25
@@ -12,8 +13,11 @@
 #define BUTTON_LEFT_PIN 26
 #define BUTTON_RIGHT_PIN 17
 
+#define LED_PIN 4
+
 Button btnLeft(BUTTON_LEFT_PIN);
 Button btnRight(BUTTON_RIGHT_PIN);
+Led led(LED_PIN);
 
 MFRC522_SPI spiDevice = MFRC522_SPI(SS_PIN, RST_PIN);
 MFRC522 mfrc522 = MFRC522(&spiDevice);
@@ -82,6 +86,8 @@ void setup()
   // NOTE: this stuff all dates back to 2019, is there no more recent option?
   btnLeft.begin();
   btnRight.begin();
+  led.begin();
+  led.on();
 
   // c.f. https://datasheets.raspberrypi.com/bcm2711/bcm2711-peripherals.pdf
   // p. 75

@@ -1,4 +1,6 @@
 build/
+covers/
 deps/
 .DS_Store
 *.FCBak
+venv/
