@@ -141,9 +141,9 @@ void SpotifyPlayer::getMetadata()
 
     {
         std::lock_guard<std::mutex> lock(mMutex);
-        mStatus.artist = artist;
-        mStatus.album = album;
-        mStatus.title = title;
+        mStatus.artist = artist ? artist : "";
+        mStatus.album = album ? album : "";
+        mStatus.title = title ? title : "";
     }
 
     g_free(artist);
@@ -232,6 +232,7 @@ void SpotifyPlayer::threadEntry()
 
         getPlaybackStatus();
         getMetadata();
+        g_print("Player: %s status: %d title: %s\n", name->name, mStatus.status, mStatus.title.c_str());
 
         {
             std::unique_lock<std::mutex> lock(mMutex);
