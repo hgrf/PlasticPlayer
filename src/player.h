@@ -55,6 +55,8 @@ public:
 private:
   void threadEntry();
   void processCommand(const SpotifyCommand &cmd);
+  void getMetadata();
+  void getPlaybackStatus();
 
   class SpotifyPlayerImpl;
   std::unique_ptr<SpotifyPlayerImpl> mImpl;

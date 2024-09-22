@@ -21,7 +21,8 @@ void StatusScreen::show(bool forceRefresh)
     if (status.status == SpotifyPlayerStatus::DISCONNECTED)
     {
         ssd1306_clearScreen();
-        ssd1306_printFixed(0, 0, "Not connected to Spotify", STYLE_NORMAL);
+        ssd1306_printFixed(0, 0, "Not connected to", STYLE_NORMAL);
+        ssd1306_printFixed(0, 10, "Spotify", STYLE_NORMAL);
         return;
     }
 

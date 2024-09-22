@@ -49,6 +49,7 @@ void SpotifyPlayer::processCommand(const SpotifyCommand &cmd)
     gboolean can_play = FALSE;
     gboolean can_go_next = FALSE;
 
+    // TODO: de facto this never happens at the moment because the encapsulating loop continues when mPlayer is NULL
     if (mImpl->mPlayer == NULL)
     {
         g_printerr("Not connected to player\n");
@@ -104,23 +105,97 @@ void SpotifyPlayer::processCommand(const SpotifyCommand &cmd)
     if (error)
     {
         g_printerr("Error: %s\n", error->message);
+        g_error_free(error);
+    }
+}
+
+void SpotifyPlayer::getMetadata()
+{
+    GError *error = NULL;
+    gchar *artist = playerctl_player_get_artist(mImpl->mPlayer, &error);
+    if (error)
+    {
+        g_printerr("Failed to get artist: %s\n", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    gchar *album = playerctl_player_get_album(mImpl->mPlayer, &error);
+    if (error)
+    {
+        g_printerr("Failed to get album: %s\n", error->message);
+        g_error_free(error);
+        g_free(artist);
+        return;
+    }
+
+    gchar *title = playerctl_player_get_title(mImpl->mPlayer, &error);
+    if (error)
+    {
+        g_printerr("Failed to get title: %s\n", error->message);
+        g_error_free(error);
+        g_free(artist);
+        g_free(album);
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mStatus.artist = artist;
+        mStatus.album = album;
+        mStatus.title = title;
+    }
+
+    g_free(artist);
+    g_free(album);
+    g_free(title);
+}
+
+void SpotifyPlayer::getPlaybackStatus()
+{
+    PlayerctlPlaybackStatus status = PLAYERCTL_PLAYBACK_STATUS_STOPPED;
+    g_object_get(mImpl->mPlayer, "playback-status", &status, NULL);
+
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        switch (status)
+        {
+        case PLAYERCTL_PLAYBACK_STATUS_PLAYING:
+            mStatus.status = SpotifyPlayerStatus::PLAYING;
+            break;
+        case PLAYERCTL_PLAYBACK_STATUS_PAUSED:
+            mStatus.status = SpotifyPlayerStatus::PAUSED;
+            break;
+        case PLAYERCTL_PLAYBACK_STATUS_STOPPED:
+            mStatus.status = SpotifyPlayerStatus::STOPPED;
+            break;
+        default:
+            mStatus.status = SpotifyPlayerStatus::DISCONNECTED;
+            break;
+        }
     }
 }
 
 void SpotifyPlayer::threadEntry()
 {
     GError *error = NULL;
-    mImpl->mManager = playerctl_player_manager_new(&error);
-    if (mImpl->mManager == NULL)
-    {
-        g_printerr("Failed to create player manager: %s\n", error->message
-                                                                ? error->message
-                                                                : "unknown error");
-        mRunning = false;
-    }
 
     while (mRunning)
     {
+        if (mImpl->mManager == NULL)
+        {
+            mImpl->mManager = playerctl_player_manager_new(&error);
+            if (mImpl->mManager == NULL)
+            {
+                g_printerr("Failed to create player manager: %s\n", error->message
+                                                                        ? error->message
+                                                                        : "unknown error");
+                std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_DELAY_MS));
+                // TODO: make sure command queue is emptied
+                continue;
+            }
+        }
+
         GList *players = NULL;
         g_object_get(mImpl->mManager, "player-names", &players, NULL);
         if (players == NULL)
@@ -131,63 +206,39 @@ void SpotifyPlayer::threadEntry()
                 mStatus.status = SpotifyPlayerStatus::DISCONNECTED;
             }
 
-            // TODO: try to reinit the manager after a while
             std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_DELAY_MS));
+            g_object_unref(mImpl->mManager);
+            mImpl->mManager = NULL;
+            // TODO: make sure command queue is emptied
             continue;
         }
 
         PlayerctlPlayerName *name = static_cast<PlayerctlPlayerName *>(players->data);
         mImpl->mPlayer = playerctl_player_new_from_name(name, &error);
-        if (mImpl->mPlayer == NULL)
+        if (error)
         {
-            g_printerr("Failed to create player: %s\n", error->message
-                                                            ? error->message
-                                                            : "unknown error");
-            g_list_free(players);
+            g_printerr("Failed to create player: %s\n", error->message);
+            g_error_free(error);
+            g_object_unref(mImpl->mManager);
+            mImpl->mManager = NULL;
             {
                 std::lock_guard<std::mutex> lock(mMutex);
                 mStatus.status = SpotifyPlayerStatus::DISCONNECTED;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_DELAY_MS));
+            // TODO: make sure command queue is emptied
             continue;
         }
 
-        PlayerctlPlaybackStatus status = PLAYERCTL_PLAYBACK_STATUS_STOPPED;
-        g_object_get(mImpl->mPlayer, "playback-status", &status, NULL);
-        gchar *artist = playerctl_player_get_artist(mImpl->mPlayer, &error);
-        gchar *album = playerctl_player_get_album(mImpl->mPlayer, &error);
-        gchar *title = playerctl_player_get_title(mImpl->mPlayer, &error);
-
-        g_print("status: %d, artist: %s, album: %s, title: %s\n", status, artist, album, title);
-
-        {
-            std::lock_guard<std::mutex> lock(mMutex);
-            switch (status)
-            {
-            case PLAYERCTL_PLAYBACK_STATUS_PLAYING:
-                mStatus.status = SpotifyPlayerStatus::PLAYING;
-                break;
-            case PLAYERCTL_PLAYBACK_STATUS_PAUSED:
-                mStatus.status = SpotifyPlayerStatus::PAUSED;
-                break;
-            case PLAYERCTL_PLAYBACK_STATUS_STOPPED:
-                mStatus.status = SpotifyPlayerStatus::STOPPED;
-                break;
-            }
-            mStatus.artist = artist;
-            mStatus.album = album;
-            mStatus.title = title;
-        }
-
-        g_free(artist);
-        g_free(title);
-        g_free(album);
+        getPlaybackStatus();
+        getMetadata();
 
         {
             std::unique_lock<std::mutex> lock(mMutex);
-            if (mCond.wait_for(lock, std::chrono::milliseconds(100), [this]
-                               { return mRunning && !mCommandQueue.empty(); }) == false)
+            if (!mCond.wait_for(lock, std::chrono::milliseconds(100), [this]
+                                { return mRunning && !mCommandQueue.empty(); }))
             {
+                g_object_unref(mImpl->mPlayer);
                 continue;
             }
             SpotifyCommand cmd = mCommandQueue.front();
@@ -197,10 +248,9 @@ void SpotifyPlayer::threadEntry()
         }
 
         g_object_unref(mImpl->mPlayer);
-        g_list_free(players);
     }
 
-    if (mImpl->mManager != NULL)
+    if (mImpl->mManager)
     {
         g_object_unref(mImpl->mManager);
     }
