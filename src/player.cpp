@@ -2,6 +2,8 @@
 
 #include <playerctl/playerctl.h>
 
+#define RETRY_DELAY_MS 1000
+
 extern "C"
 {
 #include <playerctl/playerctl-common.h>
@@ -130,6 +132,7 @@ void SpotifyPlayer::threadEntry()
             }
 
             // TODO: try to reinit the manager after a while
+            std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_DELAY_MS));
             continue;
         }
 
@@ -145,6 +148,7 @@ void SpotifyPlayer::threadEntry()
                 std::lock_guard<std::mutex> lock(mMutex);
                 mStatus.status = SpotifyPlayerStatus::DISCONNECTED;
             }
+            std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_DELAY_MS));
             continue;
         }
 
