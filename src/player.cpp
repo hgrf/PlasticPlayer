@@ -100,6 +100,16 @@ void SpotifyPlayer::processCommand(const SpotifyCommand &cmd)
         }
         playerctl_player_previous(mImpl->mPlayer, &error);
         break;
+    case SpotifyCommand::STOP:
+        g_print("processing stop command\n");
+        g_object_get(mImpl->mPlayer, "can-play", &can_play, NULL);
+        if (!can_play)
+        {
+            g_debug("can-play is false, skipping");
+            break;
+        }
+        playerctl_player_stop(mImpl->mPlayer, &error);
+        break;
     }
 
     if (error)

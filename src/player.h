@@ -15,6 +15,7 @@ public:
     PLAY_PAUSE,
     NEXT,
     PREVIOUS,
+    STOP,
   };
   const CommandType typ;
   const std::string payload;

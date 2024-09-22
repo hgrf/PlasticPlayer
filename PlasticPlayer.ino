@@ -25,6 +25,8 @@ MFRC522_SPI spiDevice = MFRC522_SPI(SS_PIN, RST_PIN);
 MFRC522 mfrc522 = MFRC522(&spiDevice);
 NfcAdapter nfc = NfcAdapter(&mfrc522);
 
+#define TAG_REMOVE_DEBOUNCE_COUNT 3
+
 SpotifyPlayer player;
 MenuScreen menu(player, btnLeft, btnRight, led);
 StatusScreen statusScreen(player);
@@ -39,35 +41,51 @@ void nfcThreadEntry()
   mfrc522.PCD_Init();
   nfc.begin();
 
+  int debounceCount = TAG_REMOVE_DEBOUNCE_COUNT;
   while (1)
   {
     if (nfc.tagPresent())
     {
+      // TODO: do we need the whole nfc.read() or can we just read the UID?
       NfcTag tag = nfc.read();
       String uid = tag.getUidString();
       if (uid != lastUid)
       {
         Console.print("New tag detected: ");
         Console.println(uid);
+        led.on();
 
         if (tag.hasNdefMessage())
         {
           NdefMessage message = tag.getNdefMessage();
           NdefRecord record = message.getRecord(0);
           String uri = record.asUri();
+          Console.print("URI: ");
+          Console.println(uri);
           if (uri.startsWith("https://open.spotify.com/"))
           {
             uri.replace("https://open.spotify.com/", "spotify:");
             uri.replace("/", ":");
-            ssd1306_clearScreen();
+            // ssd1306_clearScreen();
             lastAlbumChange = millis();
-            ssd1306_printFixed(0, 0, "Loading album...", STYLE_NORMAL);
+            // TODO: this should be done by the status screen
+            // ssd1306_printFixed(0, 0, "Loading album...", STYLE_NORMAL);
             player.pushCommand(SpotifyCommand(SpotifyCommand::PLAY, std::string(uri.c_str())));
           }
         }
       }
 
       lastUid = uid;
+      debounceCount = TAG_REMOVE_DEBOUNCE_COUNT;
+    }
+    else if (lastUid.length() > 0 && debounceCount-- == 0)
+    {
+      // NOTE: this happens after every successful read, even if the tag is still present
+      Console.println("Tag removed");
+      lastUid = "";
+      debounceCount = TAG_REMOVE_DEBOUNCE_COUNT;
+      player.pushCommand(SpotifyCommand(SpotifyCommand::STOP));
+      led.off();
     }
   }
 }
@@ -79,7 +97,6 @@ void setup()
   btnLeft.begin();
   btnRight.begin();
   led.begin();
-  led.on();
 
   // c.f. https://datasheets.raspberrypi.com/bcm2711/bcm2711-peripherals.pdf
   // p. 75
