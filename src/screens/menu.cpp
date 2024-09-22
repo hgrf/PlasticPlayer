@@ -9,10 +9,11 @@ static const char *menuItems[] = {
     "Next",
     "Previous",
     "Bluetooth",
+    "Light",
 };
 
-MenuScreen::MenuScreen(SpotifyPlayer &player, Button &buttonNext, Button &buttonSelect)
-    : mVisible(false), mLastEvent(0), mPlayer(player), mButtonNext(buttonNext), mButtonSelect(buttonSelect)
+MenuScreen::MenuScreen(SpotifyPlayer &player, Button &buttonNext, Button &buttonSelect, Led &led)
+    : mVisible(false), mLastEvent(0), mPlayer(player), mButtonNext(buttonNext), mButtonSelect(buttonSelect), mLed(led)
 {
     ssd1306_createMenu(&menu, (const char **)menuItems, sizeof(menuItems) / sizeof(char *));
 }
@@ -49,6 +50,11 @@ void MenuScreen::select()
         mPlayer.pushCommand(SpotifyCommand(SpotifyCommand::PREVIOUS));
         break;
     case 3:
+        break;
+    case 4:
+        mLed.toggle();
+        break;
+    default:
         break;
     }
 }

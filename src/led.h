@@ -24,6 +24,11 @@ public:
     digitalWrite(mPin, LOW);
   }
 
+  void toggle()
+  {
+    digitalWrite(mPin, !digitalRead(mPin));
+  }
+
 private:
   int mPin;
 };

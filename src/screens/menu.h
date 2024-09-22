@@ -1,12 +1,13 @@
 #pragma once
 
 #include "../button.h"
+#include "../led.h"
 #include "../player.h"
 
 class MenuScreen
 {
 public:
-    MenuScreen(SpotifyPlayer &player, Button &buttonNext, Button &buttonSelect);
+    MenuScreen(SpotifyPlayer &player, Button &buttonNext, Button &buttonSelect, Led &led);
     ~MenuScreen() = default;
 
     void show();
@@ -22,4 +23,5 @@ private:
     SpotifyPlayer &mPlayer;
     Button &mButtonNext;
     Button &mButtonSelect;
+    Led &mLed;
 };

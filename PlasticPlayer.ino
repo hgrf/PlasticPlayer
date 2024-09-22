@@ -26,7 +26,7 @@ MFRC522 mfrc522 = MFRC522(&spiDevice);
 NfcAdapter nfc = NfcAdapter(&mfrc522);
 
 SpotifyPlayer player;
-MenuScreen menu(player, btnLeft, btnRight);
+MenuScreen menu(player, btnLeft, btnRight, led);
 StatusScreen statusScreen(player);
 
 unsigned long lastAlbumChange;
