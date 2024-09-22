@@ -124,6 +124,6 @@ void loop()
   menu.process();
   if (!menu.isVisible())
   {
-    statusScreen.show(!menuWasVisible);
+    statusScreen.show(menuWasVisible);
   }
 }

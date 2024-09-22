@@ -12,8 +12,6 @@ StatusScreen::StatusScreen(SpotifyPlayer &player)
 
 void StatusScreen::show(bool forceRefresh)
 {
-    uint32_t t0 = millis();
-
     auto status = mPlayer.getStatus();
     if (status.status == mPreviousStatus.status && status.title == mPreviousStatus.title && !forceRefresh)
     {
@@ -46,4 +44,6 @@ void StatusScreen::show(bool forceRefresh)
 
     ssd1306_printFixed(0, 20, status.artist.c_str(), STYLE_NORMAL);
     ssd1306_printFixed(0, 30, status.title.c_str(), STYLE_NORMAL);
+
+    mPreviousStatus = status;
 }
