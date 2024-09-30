@@ -13,9 +13,11 @@ This is a remake of [Plastic Player 2](https://brendandawes.com/projects/plastic
 # Materials
 
 * **Raspberry Pi 4B** | [ CAD ](https://grabcad.com/library/raspberry-pi-4-model-b-1) | [ Amazon ](https://www.amazon.fr/dp/B07TGBLK33/)
-* **128 x 64 I2C OLED**, [ CAD ](https://grabcad.com/library/ssd1306-oled-display-128x64-1) , [ Amazon ](https://www.amazon.fr/dp/B0CN96XB5Y)
-  * _TODO_: find SSD1306 model with correct screw spacings
-  * https://grabcad.com/library/i2c-0-96-oled-ssd1306-display-1     <- NOTE: this model's screw spacing is much closer to my module, but the height seems larger
+* **128 x 64 I2C OLED**, [ CAD ](https://grabcad.com/library/arduino-0-91-0-96-inch-oled-1) | [ Amazon ](https://www.amazon.fr/dp/B0CN96XB5Y)
+  NOTE: There are similar OLED modules with slightly different dimensions, e.g.:
+  * https://grabcad.com/library/ssd1306-oled-display-128x64-1
+  * https://grabcad.com/library/i2c-0-96-oled-ssd1306-display-1
+  * https://grabcad.com/library/display-oled-ssd1306-de-0-96-1
 * [ **Joy-IT RFID module** ](https://joy-it.net/en/products/SBC-RFID-RC522) | [ CAD ](https://grabcad.com/library/rfid-rc5222-1) | [ Amazon ](https://www.amazon.fr/dp/B07B3N1WTL)
   * _TODO_: here too it seems the screw spacing does not 100% correspond
 * 2 x **Sanwa Arcade Buttons** | [ CAD ](https://grabcad.com/library/sanwa-obsf-24-arcade-button-1) | [ Amazon ](https://www.amazon.fr/dp/B075DCB7LT)
