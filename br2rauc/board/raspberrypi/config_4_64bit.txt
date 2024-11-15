@@ -103,3 +103,4 @@ gpio=4=ip,pu
 # Enable early debugging info
 uart_2ndstage=1
 
+dtoverlay=dwc2

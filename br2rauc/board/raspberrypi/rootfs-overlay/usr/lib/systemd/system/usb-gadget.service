@@ -1,0 +1,7 @@
+[Unit]
+Description=Set up USB gadget
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/usb-gadget.sh

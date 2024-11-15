@@ -22,6 +22,10 @@ elif [ -d ${TARGET_DIR}/etc/systemd ]; then
        "${TARGET_DIR}/etc/systemd/system/getty.target.wants/getty@tty1.service"
 fi
 
+# enable systemd services
+mkdir -p "${TARGET_DIR}/etc/systemd/system/multi-user.target.wants"
+ln -sf /usr/lib/systemd/system/usb-gadget.service \
+       "${TARGET_DIR}/etc/systemd/system/multi-user.target.wants/usb-gadget.service"
 
 # Mount persistent data partitions
 if [ -e ${TARGET_DIR}/etc/fstab ]; then
