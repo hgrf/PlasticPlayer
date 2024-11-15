@@ -10,6 +10,13 @@ BOARD_NAME="$(basename ${BOARD_DIR})"
 # If VERSION is unset, fallback to the Buildroot version
 RAUC_VERSION=${VERSION:-${BR2_VERSION_FULL}}
 
+# Add public key for SSH access, if it exists
+if [ -e ${BR2_EXTERNAL_BR2RAUC_PATH}/../ssh-keys/id_ed25519.pub ]; then
+	mkdir -p ${TARGET_DIR}/home/br2rauc/.ssh
+	cp ${BR2_EXTERNAL_BR2RAUC_PATH}/../ssh-keys/id_ed25519.pub ${TARGET_DIR}/home/br2rauc/.ssh/authorized_keys
+	chmod 600 ${TARGET_DIR}/home/br2rauc/.ssh/authorized_keys
+fi
+
 # Add a console on tty1
 if [ -e ${TARGET_DIR}/etc/inittab ]; then
     grep -qE '^tty1::' ${TARGET_DIR}/etc/inittab || \
