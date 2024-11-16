@@ -10,6 +10,9 @@ BOARD_NAME="$(basename ${BOARD_DIR})"
 # If VERSION is unset, fallback to the Buildroot version
 RAUC_VERSION=${VERSION:-${BR2_VERSION_FULL}}
 
+# Convert and add splash screen for u-boot
+/usr/bin/python3 ${BR2_EXTERNAL_BR2RAUC_PATH}/../uboot-splash/splash.py
+
 # Add public key for SSH access, if it exists
 if [ -e ${BR2_EXTERNAL_BR2RAUC_PATH}/../ssh-keys/id_ed25519.pub ]; then
 	mkdir -p ${TARGET_DIR}/home/br2rauc/.ssh
