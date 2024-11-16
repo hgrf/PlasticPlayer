@@ -11,6 +11,8 @@ test -n "${DTB_FILE}" || setenv DTB_FILE bcm2711-rpi-4-b.dtb
 fdt_addr=${fdt_addr}
 env delete fdt_addr
 
+setenv bootdelay 0
+
 # To boot from the rescue partition, tie GPIO4 (pin 7) to GND (pin 9)
 # The gpio input command will return an exit status of 0 (true)
 # If the pin is high (pulled up by default) the exit status is 1 (false)
