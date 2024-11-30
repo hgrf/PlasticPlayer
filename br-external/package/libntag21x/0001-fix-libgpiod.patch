@@ -1,0 +1,23 @@
+diff --git a/project/raspberrypi4b/Makefile b/project/raspberrypi4b/Makefile
+index 16ed47e..bf4abcf 100644
+--- a/project/raspberrypi4b/Makefile
++++ b/project/raspberrypi4b/Makefile
+@@ -56,14 +56,15 @@ AR := ar
+ PKGS := libgpiod
+ 
+ # set the pck-config header directories
+-LIB_INC_DIRS := $(shell pkg-config --cflags $(PKGS))
++LIB_INC_DIRS := -I$(STAGING_DIR)/usr/include
+ 
+ # set the linked libraries
+ LIBS := -lm \
+-		-lpthread
++		-lpthread \
++		-lgpiod
+ 
+ # add the linked libraries
+-LIBS += $(shell pkg-config --libs $(PKGS))
++LIBS += -L$(TARGET_DIR)/usr/lib
+ 
+ # set all header directories
+ INC_DIRS := -I ../../src/ \

@@ -1,0 +1,14 @@
+diff --git a/project/raspberrypi4b/Makefile b/project/raspberrypi4b/Makefile
+index 16ed47e..365b5a5 100644
+--- a/project/raspberrypi4b/Makefile
++++ b/project/raspberrypi4b/Makefile
+@@ -99,8 +99,7 @@ MAIN := $(SRCS) \
+ 		$(wildcard ./src/main.c)
+ 
+ # set the definitions
+-DEFS := -D USE_DRIVER_MFRC522 \
+-		-D NO_DEBUG
++DEFS := -D USE_DRIVER_MFRC522
+ 
+ # set flags of the compiler
+ CFLAGS := -O3 \

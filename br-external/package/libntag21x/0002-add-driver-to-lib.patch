@@ -1,0 +1,28 @@
+diff --git a/project/raspberrypi4b/Makefile b/project/raspberrypi4b/Makefile
+index 16ed47e..4867918 100644
+--- a/project/raspberrypi4b/Makefile
++++ b/project/raspberrypi4b/Makefile
+@@ -86,6 +86,14 @@ INSTL_INCS := $(wildcard ../../src/*.h)
+ # set all sources files
+ SRCS := $(wildcard ../../src/*.c)
+ 
++LIB_SRCS := $(SRCS) \
++		$(wildcard ./driver/src/*.c) \
++		$(wildcard ../../example/*.c) \
++		$(wildcard ../../reader/mfrc522/src/*.c) \
++		$(wildcard ../../reader/mfrc522/example/*.c) \
++		$(wildcard ../../reader/mfrc522/project/raspberrypi4b/driver/src/*.c) \
++		$(wildcard ../../reader/mfrc522/project/raspberrypi4b/interface/src/*.c)
++
+ # set the main source
+ MAIN := $(SRCS) \
+ 		$(wildcard ../../example/*.c) \
+@@ -117,7 +125,7 @@ $(APP_NAME) : $(MAIN)
+ 			$(CC) $(CFLAGS) $(DEFS) $^ $(INC_DIRS) $(LIBS) -o $@
+ 
+ # set the shared lib
+-$(SHARED_LIB_NAME).$(VERSION) : $(SRCS)
++$(SHARED_LIB_NAME).$(VERSION) : $(LIB_SRCS)
+ 								$(CC) $(CFLAGS) -shared -fPIC $(DEFS) $^ $(INC_DIRS) -lm -o $@
+ 
+ # set the *.o for the static libraries
