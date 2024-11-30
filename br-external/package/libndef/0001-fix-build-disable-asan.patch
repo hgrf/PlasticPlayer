@@ -1,0 +1,25 @@
+diff --git a/Makefile b/Makefile
+index 17c4da8..c6616a2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -20,8 +20,6 @@ CXXFLAGS += -I$(INC_DIR)/
+ 
+ # Max optimization
+ RELEASE_FLAGS += -O3
+-# Enable AddressSanitize support
+-RELEASE_FLAGS += -fsanitize=address
+ # Enable Link Time Optimization
+ RELEASE_FLAGS += -flto
+ # Treat warnings as errors for release builds
+@@ -35,7 +33,10 @@ COVERAGE_FLAGS := $(DEBUG_FLAGS) -fno-inline -fno-inline-small-functions -fno-de
+ 
+ # Linker flags - all below are the same as above
+ LDFLAGS  	  	:= -Wall -Wextra
+-RELEASE_LDFLAGS := $(LDFLAGS) -fsanitize=address -flto -fPIC
++RELEASE_LDFLAGS := $(LDFLAGS) -flto -fPIC
++
++CXXFLAGS += -include cstdint
++LDFLAGS += -shared
+ 
+ # Libraries
+ LIB  :=

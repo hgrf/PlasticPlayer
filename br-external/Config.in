@@ -1,2 +1,3 @@
+source "$BR2_EXTERNAL_BR2RAUC_PATH/package/libndef/Config.in"
 source "$BR2_EXTERNAL_BR2RAUC_PATH/package/libntag21x/Config.in"
 source "$BR2_EXTERNAL_BR2RAUC_PATH/package/librespot/Config.in"
