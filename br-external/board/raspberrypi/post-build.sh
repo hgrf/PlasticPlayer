@@ -73,14 +73,3 @@ sed -i "/compatible/s/=.*\$/=${RAUC_COMPATIBLE}/" ${TARGET_DIR}/etc/rauc/system.
 
 # Create rauc version file
 echo "${RAUC_VERSION}" > ${TARGET_DIR}/etc/rauc/version
-
-# Customize login prompt with login hints
-cat <<- EOF >> ${TARGET_DIR}/etc/issue
-
-	Default username:password is [user:<empty>]
-	Root login disabled, use sudo su -
-	With great power comes great responsibility!
-
-	eth0: \4{eth0}
-
-EOF
