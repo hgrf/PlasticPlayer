@@ -9,3 +9,5 @@ IPMasquerade=ipv4
 [DHCPServer]
 PoolOffset=100
 PoolSize=20
+EmitDNS=false
+EmitRouter=false
