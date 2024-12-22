@@ -13,6 +13,6 @@ with open(os.path.join(os.environ["BINARIES_DIR"], "splash.bin"), "wb") as f:
             v = 0
             for n in range(8):
                 r, g, b, a = im.getpixel((col, row * 8 + n))
-                if r > 128 or g > 128 or b > 128:
+                if r <= 128 or g <= 128 or b <= 128:
                     v |= 1 << n
             f.write(struct.pack('B', v))
