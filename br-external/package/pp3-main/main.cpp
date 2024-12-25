@@ -212,6 +212,14 @@ int main(int argc, char *argv[]) {
 
     res = ui_init();
     if (res != 0) {
+        (void)ntag21x_basic_deinit();
+        return 1;
+    }
+
+    res = librespot_init();
+    if (res != 0) {
+        ui_deinit();
+        (void)ntag21x_basic_deinit();
         return 1;
     }
 
@@ -222,7 +230,9 @@ int main(int argc, char *argv[]) {
     }
 
     tag_reader_thread.join();
-    
+
+    librespot_deinit();
+
     ui_deinit();
 
     (void)ntag21x_basic_deinit();

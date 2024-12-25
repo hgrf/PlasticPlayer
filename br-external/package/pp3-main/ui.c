@@ -1,5 +1,8 @@
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdio.h>
+#include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <gpiod.h>
@@ -16,16 +19,27 @@
 
 static unsigned int g_line_offsets[] = { GPIO_DEVICE_LINE_BTN_LEFT, GPIO_DEVICE_LINE_BTN_RIGHT };
 static unsigned long g_last_ts[ARRAY_SIZE(g_line_offsets)];
+static unsigned long g_last_ts_all;
 static struct gpiod_chip *gs_chip;
 static struct gpiod_line_bulk gs_lines;
 static struct gpiod_line_bulk gs_evt_lines;
 
+#define WINDOW_WIDTH 16
+#define SCROLL_PADDING 5
+#define MENU_TIMEOUT_MS 3000
+static bool g_menu_shown = false;
 static int g_fd;
 static FILE *g_file;
 static SCREEN *g_scr;
 static MENU *g_menu;
 static WINDOW *g_menu_win;
 static ITEM **g_menu_items;
+
+pthread_mutex_t g_mutex;
+static char *g_status;
+static char *g_artists;
+static char *g_album;
+static char *g_title;
 
 struct menu_item {
     const char *name;
@@ -131,7 +145,7 @@ static int menu_init(void) {
 	g_menu = new_menu((ITEM **)g_menu_items);
 
 	/* Create the window to be associated with the menu */
-    g_menu_win = newwin(8, 16, 0, 0);
+    g_menu_win = newwin(8, WINDOW_WIDTH, 0, 0);
      
 	/* Set main window and sub window */
     set_menu_win(g_menu, g_menu_win);
@@ -139,14 +153,6 @@ static int menu_init(void) {
 
 	/* Set menu mark */
     set_menu_mark(g_menu, ">");
-
-	/* Print a border around the main window */
-    box(g_menu_win, 0, 0);
-	refresh();
-        
-	/* Post the menu */
-	post_menu(g_menu);
-	wrefresh(g_menu_win);
 
     return 0;
 }
@@ -166,6 +172,8 @@ static void menu_deinit(void) {
 }
 
 int ui_init(void) {
+    pthread_mutex_init(&g_mutex, NULL);
+
     if (btn_init() < 0)
         return -1;
 
@@ -177,6 +185,39 @@ int ui_init(void) {
     return 0;
 }
 
+static unsigned long millis(void) {
+    struct timespec spec;
+    clock_gettime(CLOCK_REALTIME, &spec);
+    return spec.tv_sec * 1000 + spec.tv_nsec / 1000000;
+}
+
+static void print_scrolling(int row, const char *text)
+{
+    unsigned int len, scroll_amp;
+    int scroll_pos;
+    time_t s;
+    struct timespec spec;
+
+    if (text == NULL)
+        return;
+
+    len = strlen(text);
+    if (len <= WINDOW_WIDTH) {
+        mvwprintw(g_menu_win, row, 0, "%s", text);
+        return;
+    }
+
+    scroll_amp = len - WINDOW_WIDTH + 2 * SCROLL_PADDING;
+    scroll_pos = (millis() / 200) % (2 * scroll_amp) - scroll_amp;
+    scroll_pos = abs(scroll_pos);
+    scroll_pos -= SCROLL_PADDING;
+    if (scroll_pos < 0)
+        scroll_pos = 0;
+    if (scroll_pos > len - WINDOW_WIDTH)
+        scroll_pos = len - WINDOW_WIDTH;
+    mvwprintw(g_menu_win, row, 0, "%.16s", &text[scroll_pos]);
+}
+
 void ui_process(void) {
     int i, j, res;
     int line_idx = -1;
@@ -184,8 +225,9 @@ void ui_process(void) {
     struct gpiod_line_event event;
     ITEM *cur;
     void (*p)(void);
+    struct timespec timeout = { 0, 200000 };
 
-    res = gpiod_line_event_wait_bulk(&gs_lines, NULL, &gs_evt_lines);
+    res = gpiod_line_event_wait_bulk(&gs_lines, &timeout, &gs_evt_lines);
     if (res == 1)
     {
         for (i = 0; i < gs_evt_lines.num_lines; i++) {
@@ -209,23 +251,105 @@ void ui_process(void) {
             if (ts < g_last_ts[line_idx] + DEBOUNCE_PERIOD_MS)
                 continue;
             g_last_ts[line_idx] = ts;
+            g_last_ts_all = millis();
 
-            if (g_line_offsets[line_idx] == GPIO_DEVICE_LINE_BTN_LEFT) {
-                if (current_item(g_menu) == g_menu_items[ARRAY_SIZE(choices) - 1])
-                    menu_driver(g_menu, REQ_FIRST_ITEM);
-                else
-                    menu_driver(g_menu, REQ_DOWN_ITEM);
+            if (g_menu_shown) {
+                if (g_line_offsets[line_idx] == GPIO_DEVICE_LINE_BTN_LEFT) {
+                    if (current_item(g_menu) == g_menu_items[ARRAY_SIZE(choices) - 1])
+                        menu_driver(g_menu, REQ_FIRST_ITEM);
+                    else
+                        menu_driver(g_menu, REQ_DOWN_ITEM);
+                    wrefresh(g_menu_win);
+                } else if (g_line_offsets[line_idx] == GPIO_DEVICE_LINE_BTN_RIGHT) {
+                    cur = current_item(g_menu);
+                    p = (void (*)()) item_userptr(cur);
+                    p();
+                    /* hide menu in next iteration */
+                    g_last_ts_all = 0;
+                }
+            } else {
+                werase(g_menu_win);
+
+                /* Print a border around the main window */
+                box(g_menu_win, 0, 0);
+                refresh();
+                    
+                /* Post the menu */
+                post_menu(g_menu);
                 wrefresh(g_menu_win);
-            } else if (g_line_offsets[line_idx] == GPIO_DEVICE_LINE_BTN_RIGHT) {
-                cur = current_item(g_menu);
-                p = (void (*)()) item_userptr(cur);
-                p();
+
+                g_menu_shown = true;
             }
         }
+    } else if (res == 0 && millis() > g_last_ts_all + MENU_TIMEOUT_MS) {
+        /* timeout occured, show status screen */
+        pthread_mutex_lock(&g_mutex);
+        unpost_menu(g_menu);
+        werase(g_menu_win);
+        print_scrolling(0, g_status);
+        print_scrolling(1, g_artists);
+        print_scrolling(2, g_album);
+        print_scrolling(3, g_title);
+        wrefresh(g_menu_win);
+        pthread_mutex_unlock(&g_mutex);
+
+        g_menu_shown = false;
     }
+}
+
+void ui_update_player_status(const char *status) {
+    pthread_mutex_lock(&g_mutex);
+    if (g_status != NULL) {
+        free(g_status);
+        g_status = NULL;
+    }
+    if (status != NULL)
+        g_status = strdup(status);
+    pthread_mutex_unlock(&g_mutex);
+}
+
+void ui_update_track_info(const char *artists, const char *album, const char *title) {
+    pthread_mutex_lock(&g_mutex);
+    if (g_artists != NULL) {
+        free(g_artists);
+        g_artists = NULL;
+    }
+    if (g_album != NULL) {
+        free(g_album);
+        g_album = NULL;
+    }
+    if (g_title != NULL) {
+        free(g_title);
+        g_title = NULL;
+    }
+    if (artists != NULL)
+        g_artists = strdup(artists);
+    if (album != NULL)
+        g_album = strdup(album);
+    if (title != NULL)
+        g_title = strdup(title);
+    pthread_mutex_unlock(&g_mutex);
 }
 
 void ui_deinit(void) {
     menu_deinit();    
     btn_deinit();
+    pthread_mutex_destroy(&g_mutex);
+
+    if (g_status != NULL) {
+        free(g_status);
+        g_status = NULL;
+    }
+    if (g_artists != NULL) {
+        free(g_artists);
+        g_artists = NULL;
+    }
+    if (g_album != NULL) {
+        free(g_album);
+        g_album = NULL;
+    }
+    if (g_title != NULL) {
+        free(g_title);
+        g_title = NULL;
+    }
 }

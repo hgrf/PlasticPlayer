@@ -17,6 +17,7 @@ endef
 
 define PP3_MAIN_INSTALL_TARGET_CMDS
     $(INSTALL) -D -m 0755 $(@D)/pp3-main $(TARGET_DIR)/usr/bin/pp3-main
+	$(INSTALL) -D -m 0755 $(@D)/librespot_event_handler.sh $(TARGET_DIR)/usr/bin/librespot_event_handler.sh
 endef
 
 $(eval $(generic-package))
