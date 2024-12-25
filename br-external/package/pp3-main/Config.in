@@ -2,3 +2,4 @@ config BR2_PACKAGE_PP3_MAIN
 	bool "pp3-main"
 	select BR2_PACKAGE_LIBNTAG21X
 	select BR2_PACKAGE_LIBNDEF
+	select BR2_PACKAGE_NCURSES

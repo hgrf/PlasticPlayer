@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-LIBRESPOT_VERSION = 82076e882f3cdebec863a3c0aa79888ec47b3c76
+LIBRESPOT_VERSION = f911171f1702ce8d364c7292a94b287888a7bef3
 LIBRESPOT_SITE = $(call github,hgrf,librespot,$(LIBRESPOT_VERSION))
 LIBRESPOT_LICENSE = GPL-3.0
 LIBRESPOT_LICENSE_FILES = LICENSE

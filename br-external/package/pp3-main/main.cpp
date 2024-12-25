@@ -1,11 +1,17 @@
 #include <iostream>
+#include <signal.h>
+#include <thread>
 
 #include <driver_ntag21x_basic.h>
 #include <ndef-lite/message.hpp>
 
+#include "ui.h"
+
 #define NDEF_START_PAGE 4
 #define NDEF_START_OFFSET 2
 #define PAGE_SIZE 4
+
+static bool g_is_running = true;
 
 /**
  * @brief      read page and print data
@@ -77,7 +83,7 @@ NDEFMessage search_and_read_tag() {
     uint8_t page_count;
     ntag21x_capability_container_t type_s;
 
-    res = ntag21x_basic_search(&type_s, id, 50);
+    res = ntag21x_basic_search(&type_s, id, 1);
     if (res != 0) {
         ntag21x_interface_debug_print("ntag21x: search failed: %d\n", res);
         return NDEFMessage();
@@ -122,15 +128,8 @@ NDEFMessage search_and_read_tag() {
     }
 }
 
-int main(int argc, char *argv[]) {
-    uint8_t res;
-
-    res = ntag21x_basic_init();
-    if (res != 0) {
-        return 1;
-    }
-
-    for(;;) {
+static void tag_reader_thread_entry(void) {
+    while(g_is_running) {
         NDEFMessage msg = search_and_read_tag();
         if (msg.is_valid()) {
             std::cout << "NDEF message is valid and has " << msg.record_count() << " records" << std::endl;
@@ -141,7 +140,37 @@ int main(int argc, char *argv[]) {
             std::cout << "NDEF message is invalid" << std::endl;
         }
     }
+}
+
+static void signal_handler(int signum) {
+    g_is_running = false;
+}
+
+int main(int argc, char *argv[]) {
+    uint8_t res;
+
+    signal(SIGINT, signal_handler);
+
+    res = ntag21x_basic_init();
+    if (res != 0) {
+        return 1;
+    }
+
+    res = ui_init();
+    if (res != 0) {
+        return 1;
+    }
+
+    std::thread tag_reader_thread(tag_reader_thread_entry);
+
+    while(g_is_running) {
+        ui_process();
+    }
+
+    tag_reader_thread.join();
     
+    ui_deinit();
+
     (void)ntag21x_basic_deinit();
     
     return 0;
