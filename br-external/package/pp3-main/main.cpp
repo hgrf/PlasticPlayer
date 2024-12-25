@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <signal.h>
 #include <thread>
@@ -5,6 +6,7 @@
 #include <driver_ntag21x_basic.h>
 #include <ndef-lite/message.hpp>
 
+#include "librespot.h"
 #include "ui.h"
 
 #define NDEF_START_PAGE 4
@@ -21,7 +23,7 @@ static bool g_is_running = true;
  *             - 0 success
  *             - 1 read failed
  */
-int read_page(uint8_t page, uint8_t data[4]) {
+static int read_page(uint8_t page, uint8_t data[4]) {
     uint8_t i;
     uint8_t res = ntag21x_basic_read(page, data);
 
@@ -56,7 +58,7 @@ int read_page(uint8_t page, uint8_t data[4]) {
  *             - 0 success
  *             - 1 read failed
  */
-int read_pages(uint8_t start_page, uint8_t page_count, uint8_t *data) {
+static int read_pages(uint8_t start_page, uint8_t page_count, uint8_t *data) {
     uint8_t res;
     uint8_t i;
 
@@ -74,7 +76,7 @@ int read_pages(uint8_t start_page, uint8_t page_count, uint8_t *data) {
  * @brief      search and read tag
  * @return     NDEF message
  */
-NDEFMessage search_and_read_tag() {
+static NDEFMessage search_and_read_tag() {
     uint8_t res;
     uint8_t i;
     uint8_t id[8];
@@ -128,11 +130,33 @@ NDEFMessage search_and_read_tag() {
     }
 }
 
+static std::string g_current_uri;
+static unsigned int g_tag_remove_counter;
+
+static void load_uri(const std::string& uri) {
+    const std::string base_uri = "https://open.spotify.com/";
+    if (uri.substr(0, base_uri.length()) != base_uri) {
+        std::cout << "URI does not start with " << base_uri << std::endl;
+        return;
+    }
+
+    if (uri == g_current_uri) {
+        return;
+    }
+    g_current_uri = uri;
+
+    std::string cmd = "load spotify:" + uri.substr(base_uri.length());
+    std::replace(cmd.begin(), cmd.end(), '/', ':');
+    std::cout << "cmd: " << cmd << std::endl;
+    librespot_send_cmd(cmd.c_str());
+}
+
 static void tag_reader_thread_entry(void) {
     while(g_is_running) {
         NDEFMessage msg = search_and_read_tag();
         if (msg.is_valid()) {
             std::cout << "NDEF message is valid and has " << msg.record_count() << " records" << std::endl;
+            g_tag_remove_counter = 0;
             if (msg.record_count() > 0) {
                 // c.f. https://github.com/hgrf/NDEF/commit/4c3133f6830fbe595c937db7a17c7a65eb487a82
                 // c.f. https://github.com/hgrf/NDEF/commit/e035efd38d2deb2f6b94301faa5937c59c1dba61
@@ -142,6 +166,7 @@ static void tag_reader_thread_entry(void) {
                 const auto &rec = msg.record(0);
                 if (rec.type().name() == "U") {
                     std::cout << "Record 1 URI: " << msg.record(0).get_uri() << std::endl;
+                    load_uri(msg.record(0).get_uri());
                 } else if (rec.type().name() == "Sp") {
                     auto sp_msg = NDEFMessage::from_bytes(rec.payload(), 0);
                     if (sp_msg.is_valid()) {
@@ -150,6 +175,7 @@ static void tag_reader_thread_entry(void) {
                             const auto &sp_rec = sp_msg.record(0);
                             if (sp_rec.type().name() == "U") {
                                 std::cout << "Record 1 Smart Poster URI: " << sp_msg.record(0).get_uri() << std::endl;
+                                load_uri(sp_msg.record(0).get_uri());
                             } else {
                                 std::cout << "Record 1 Smart Poster type: " << sp_rec.type().name() << std::endl;
                             }
@@ -161,6 +187,11 @@ static void tag_reader_thread_entry(void) {
             }
         } else {
             std::cout << "NDEF message is invalid" << std::endl;
+            g_tag_remove_counter++;
+            if (g_tag_remove_counter >= 3) {
+                g_current_uri.clear();
+                librespot_send_cmd("pause");
+            }
         }
     }
 }
