@@ -134,7 +134,30 @@ static void tag_reader_thread_entry(void) {
         if (msg.is_valid()) {
             std::cout << "NDEF message is valid and has " << msg.record_count() << " records" << std::endl;
             if (msg.record_count() > 0) {
-                std::cout << "Record 1 URI: " << msg.record(0).get_uri() << std::endl;
+                // c.f. https://github.com/hgrf/NDEF/commit/4c3133f6830fbe595c937db7a17c7a65eb487a82
+                // c.f. https://github.com/hgrf/NDEF/commit/e035efd38d2deb2f6b94301faa5937c59c1dba61
+                // c.f. https://www.oreilly.com/library/view/beginning-nfc/9781449324094/ch04.html
+                // c.f. https://www.oreilly.com/library/view/beginning-nfc/9781449324094/apa.html
+                // c.f. https://berlin.ccc.de/~starbug/felica/NFCForum-SmartPoster_RTD_1.0.pdf
+                const auto &rec = msg.record(0);
+                if (rec.type().name() == "U") {
+                    std::cout << "Record 1 URI: " << msg.record(0).get_uri() << std::endl;
+                } else if (rec.type().name() == "Sp") {
+                    auto sp_msg = NDEFMessage::from_bytes(rec.payload(), 0);
+                    if (sp_msg.is_valid()) {
+                        std::cout << "Record 1 Smart Poster is valid and has " << sp_msg.record_count() << " records" << std::endl;
+                        if (sp_msg.record_count() > 0) {
+                            const auto &sp_rec = sp_msg.record(0);
+                            if (sp_rec.type().name() == "U") {
+                                std::cout << "Record 1 Smart Poster URI: " << sp_msg.record(0).get_uri() << std::endl;
+                            } else {
+                                std::cout << "Record 1 Smart Poster type: " << sp_rec.type().name() << std::endl;
+                            }
+                        }
+                    }
+                } else {
+                    std::cout << "Record 1 type: " << rec.type().name() << std::endl;
+                }
             }
         } else {
             std::cout << "NDEF message is invalid" << std::endl;
