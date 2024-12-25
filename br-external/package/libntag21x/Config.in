@@ -1,2 +1,3 @@
-config BR2_PACKAGE_LIBNTAG21x
+config BR2_PACKAGE_LIBNTAG21X
 	bool "libntag21x"
+	select BR2_PACKAGE_LIBGPIOD
