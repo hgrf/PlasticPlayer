@@ -37,9 +37,6 @@ mkdir -p "${TARGET_DIR}/etc/systemd/system/multi-user.target.wants"
 ln -sf /usr/lib/systemd/system/usb-gadget.service \
        "${TARGET_DIR}/etc/systemd/system/multi-user.target.wants/usb-gadget.service"
 
-ln -sf /usr/lib/systemd/system/web-api.service \
-       "${TARGET_DIR}/etc/systemd/system/multi-user.target.wants/web-api.service"
-
 # Mount persistent data partitions
 if [ -e ${TARGET_DIR}/etc/fstab ]; then
 	# For configuration data
