@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:convert/convert.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,27 +12,11 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
@@ -39,87 +28,193 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+// TODO: use code generation to generate these classes
+class WifiNetwork {
+  final String id;
+  final String ssid;
 
-  void _incrementCounter() {
+  WifiNetwork(this.id, this.ssid);
+
+  @factory
+  static WifiNetwork fromApiResult(dynamic result) {
+    final id = result[0] as String;
+    final ssid =
+        String.fromCharCodes(hex.decode(id.split('/').last.split('_').first));
+    return WifiNetwork(id, ssid);
+  }
+}
+
+class WifiState {
+  final String state;
+  final WifiNetwork? connectedNetwork;
+
+  WifiState(this.state, this.connectedNetwork);
+
+  @factory
+  static WifiState fromApiResult(dynamic result) {
+    final state = result['state'] as String;
+    final connectedNetwork = result['connectedNetwork'] == null
+        ? null
+        : WifiNetwork.fromApiResult([result['connectedNetwork']]);
+    return WifiState(state, connectedNetwork);
+  }
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  static const _baseUri = 'http://10.42.0.1:9000';
+  WifiState _wifiState = WifiState('unknown', null);
+  bool _isScanning = false;
+  List<WifiNetwork> _scanResults = [];
+  List<WifiNetwork> _knownNetworks = [];
+  late Timer _refreshTimer;
+
+  Future<void> _refreshState() async {
+    var resp = await get(Uri.parse("$_baseUri/wifi/state"));
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _wifiState = WifiState.fromApiResult(jsonDecode(resp.body));
     });
+
+    resp = await get(Uri.parse("$_baseUri/wifi/is_scanning"));
+    setState(() {
+      _isScanning = resp.body == '1';
+    });
+
+    resp = await get(Uri.parse("$_baseUri/wifi/scan_results"));
+    setState(() {
+      _scanResults = (jsonDecode(resp.body) as List<dynamic>)
+          .map((e) => WifiNetwork.fromApiResult(e))
+          .toList();
+    });
+  }
+
+  Future<void> _getKnownNetworks() async {
+    final resp = await get(Uri.parse("$_baseUri/wifi/known_networks"));
+    _knownNetworks = (jsonDecode(resp.body) as List<dynamic>)
+        .map((e) => WifiNetwork.fromApiResult(e))
+        .toList();
+  }
+
+  void _timerCallback(Timer timer) {
+    _refreshState();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), _timerCallback);
+    _getKnownNetworks();
+    _refreshState();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer.cancel();
+    super.dispose();
+  }
+
+  Future<void> _scan() async {
+    await post(Uri.parse('$_baseUri/wifi/scan'));
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
+        child: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text('Wifi state: ${_wifiState.state}'),
+                if (_wifiState.state == 'connected' ||
+                    _wifiState.state == 'connecting') ...[
+                  Text("to ${_wifiState.connectedNetwork?.ssid ?? "none"}"),
+                  ElevatedButton(
+                      onPressed: () =>
+                          post(Uri.parse('$_baseUri/wifi/disconnect')),
+                      child: const Text('Disconnect'))
+                ],
+                const Text("Known networks:"),
+                ..._knownNetworks.map((network) => ListTile(
+                    leading: !_scanResults.any((e) => e.id == network.id)
+                        ? const Icon(Icons.wifi_off)
+                        : const Icon(Icons.wifi),
+                    trailing: ElevatedButton(
+                        child: const Text("Forget"),
+                        onPressed: () async {
+                          await post(Uri.parse('$_baseUri/wifi/forget'),
+                              headers: {"Content-Type": "application/json"},
+                              body: jsonEncode({"id": network.id}));
+                          _getKnownNetworks();
+                        }),
+                    title: Text(network.ssid),
+                    onTap: () => !_scanResults.any((e) => e.id == network.id)
+                        ? null
+                        : post(Uri.parse('$_baseUri/wifi/connect'),
+                            headers: {"Content-Type": "application/json"},
+                            body: jsonEncode({"id": network.id})))),
+                const Text("Available networks:"),
+                if (_isScanning)
+                  const Row(mainAxisSize: MainAxisSize.min, children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 20),
+                    Text("Scanning...")
+                  ]),
+                ..._scanResults
+                    .where((e) => !_knownNetworks.any((n) => e.id == n.id))
+                    .map((network) => ListTile(
+                        leading: const Icon(Icons.wifi),
+                        title: Text(network.ssid),
+                        onTap: () async {
+                          final passphrase = await showDialog<String>(
+                              context: context,
+                              builder: (context) {
+                                final controller = TextEditingController();
+                                return AlertDialog(
+                                  title: const Text('Enter passphrase'),
+                                  content: TextField(
+                                    controller: controller,
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context)
+                                            .pop(controller.text);
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              });
+                          if (passphrase != null) {
+                            await post(Uri.parse('$_baseUri/wifi/register'),
+                                headers: {"Content-Type": "application/json"},
+                                body: jsonEncode({
+                                  "id": network.id,
+                                  "passphrase": passphrase
+                                }));
+                            _getKnownNetworks();
+                          }
+                        })),
+              ],
+            )),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        onPressed: _isScanning ? null : _scan,
+        tooltip: 'Scan',
+        child: const Text('Scan'),
+      ),
     );
   }
 }
