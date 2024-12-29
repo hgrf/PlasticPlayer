@@ -1,0 +1,20 @@
+[Unit]
+Description=A Spotify connect daemon
+Wants=sound.target
+After=sound.target
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=user
+Type=simple
+ExecStartPre=+mkdir -p /data/librespot_cache
+ExecStartPre=+chown user:user /data/librespot_cache
+ExecStart=/usr/bin/librespot --cache /data/librespot_cache --name PlasticPlayer3 --onevent /usr/bin/librespot_event_handler.sh
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -28,8 +28,8 @@ define SPOTIFYD_INSTALL_TARGET_CMDS
 endef
 
 define LIBRESPOT_INSTALL_INIT_SYSTEMD
-	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_BR2RAUC_PATH)/package/librespot/spotifyd.service \
-		$(TARGET_DIR)/usr/lib/systemd/system/spotifyd.service
+	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_BR2RAUC_PATH)/package/librespot/librespot.service \
+		$(TARGET_DIR)/usr/lib/systemd/system/librespot.service
 endef
 
 $(eval $(cargo-package))
