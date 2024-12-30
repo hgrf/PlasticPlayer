@@ -1,6 +1,6 @@
 import dbus
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -64,7 +64,7 @@ async def wifi_get_known_networks():
 @app.post("/wifi/forget")
 async def wifi_forget(network: WifiNetwork):
     id = "/net/connman/iwd/" + network.id
-    network = dbus.Interface(bus.get_object("net.connman.iwd", network.id),
+    network = dbus.Interface(bus.get_object("net.connman.iwd", id),
                                 "net.connman.iwd.KnownNetwork")
     network.Forget()
     return ""
@@ -118,3 +118,15 @@ async def wifi_get_scan_results():
     for d in device.GetOrderedNetworks():
         devices.append([d[0].split("/")[-1], d[1]])
     return devices
+
+@app.get("/firmware/status")
+async def firmware_get_status():
+    installer = dbus.Interface(bus.get_object("de.pengutronix.rauc", '/'),
+                                "de.pengutronix.rauc.Installer")
+    return installer.GetSlotStatus()
+
+@app.post("/firmware/upload")
+async def firmware_upload(file: UploadFile):
+    with open("/upload/" + file.filename, "wb") as f:
+        f.write(file.file.read())
+    return ""
