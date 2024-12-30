@@ -3,4 +3,3 @@ output/
 .DS_Store
 *.FCBak
 openssl-ca/
-br-external/board/raspberrypi/rootfs-overlay/usr/html/

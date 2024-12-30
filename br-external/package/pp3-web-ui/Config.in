@@ -1,0 +1,2 @@
+config BR2_PACKAGE_PP3_WEB_UI
+	bool "pp3-web-ui"
