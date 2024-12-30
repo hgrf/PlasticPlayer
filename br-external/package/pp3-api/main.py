@@ -1,4 +1,5 @@
 import dbus
+import subprocess
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -144,3 +145,8 @@ async def firmware_install(file: FirmwareFile):
 @app.get("/firmware/install_progress")
 async def firmware_install_progress():
     return installer.Get("de.pengutronix.rauc.Installer", "Progress", dbus_interface=dbus.PROPERTIES_IFACE)
+
+@app.post("/reboot")
+async def reboot():
+    subprocess.run(["sudo", "reboot"])
+    return ""

@@ -198,7 +198,14 @@ class _FirmwarePageState extends State<FirmwarePage> {
                   child: const Text("Upload firmware update"),
                   onPressed: () => _uploadFirmware(),
                 ),
-                _state.display()
+                _state.display(),
+                if (_state is _InstallingState && (_state as _InstallingState).progress == 100)
+                  ElevatedButton(
+                    child: const Text("Reboot"),
+                    onPressed: () async {
+                      await post(Uri.parse("$_baseUri/reboot"));
+                    },
+                  ),
               ],
             )),
       ),
