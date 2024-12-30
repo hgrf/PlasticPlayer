@@ -33,6 +33,9 @@ class WifiState(BaseModel):
     state: str
     connectedNetwork: str
 
+class FirmwareFile(BaseModel):
+    filename: str
+
 
 bus = dbus.SystemBus()
 manager = dbus.Interface(bus.get_object('net.connman.iwd', '/'),
@@ -40,6 +43,9 @@ manager = dbus.Interface(bus.get_object('net.connman.iwd', '/'),
 devpath = "/net/connman/iwd/0/3"
 device = dbus.Interface(bus.get_object("net.connman.iwd", devpath),
                                 "net.connman.iwd.Station")
+
+installer = dbus.Interface(bus.get_object("de.pengutronix.rauc", '/'),
+                            "de.pengutronix.rauc.Installer")
 
 
 @app.get("/wifi/state", response_model=WifiState)
@@ -121,8 +127,6 @@ async def wifi_get_scan_results():
 
 @app.get("/firmware/status")
 async def firmware_get_status():
-    installer = dbus.Interface(bus.get_object("de.pengutronix.rauc", '/'),
-                                "de.pengutronix.rauc.Installer")
     return installer.GetSlotStatus()
 
 @app.post("/firmware/upload")
@@ -130,3 +134,13 @@ async def firmware_upload(file: UploadFile):
     with open("/upload/" + file.filename, "wb") as f:
         f.write(file.file.read())
     return ""
+
+@app.post("/firmware/install")
+async def firmware_install(file: FirmwareFile):
+    path = "/upload/" + file.filename
+    installer.InstallBundle(path, [])
+    return ""
+
+@app.get("/firmware/install_progress")
+async def firmware_install_progress():
+    return installer.Get("de.pengutronix.rauc.Installer", "Progress", dbus_interface=dbus.PROPERTIES_IFACE)
