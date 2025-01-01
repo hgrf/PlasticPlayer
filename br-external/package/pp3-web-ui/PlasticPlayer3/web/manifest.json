@@ -1,6 +1,6 @@
 {
-    "name": "web_ui",
-    "short_name": "web_ui",
+    "name": "PlasticPlayer3",
+    "short_name": "PlasticPlayer3",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
