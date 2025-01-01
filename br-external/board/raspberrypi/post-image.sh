@@ -89,11 +89,6 @@ ${HOST_DIR}/bin/rauc bundle \
 eval $(rauc --keyring ${BR2_EXTERNAL_BR2RAUC_PATH}/openssl-ca/dev/ca.cert.pem --output-format=shell info ${BINARIES_DIR}/update.raucb)
 
 cat > ${BINARIES_DIR}/rauc.status << EOF
-[slot.rescue.0]
-bundle.compatible=${RAUC_MF_COMPATIBLE}
-bundle.version=${RAUC_MF_VERSION}
-status=ok
-
 [slot.${RAUC_IMAGE_CLASS_0}.0]
 bundle.compatible=${RAUC_MF_COMPATIBLE}
 bundle.version=${RAUC_MF_VERSION}
