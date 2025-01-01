@@ -2,7 +2,7 @@
 
 This is a remake of [Plastic Player 2](https://brendandawes.com/projects/plasticplayer2) ([repo](https://github.com/brendandawes/PlasticPlayer)), an NFC based controller for Spotify. This isn't a step by step instructables style build guide but hopefully there's enough information here to build your own version. Knowledge of building stuff like this, soldering and understanding Linux, software compilation and the like would be good.
 
-# Materials
+## Materials
 
 * **Raspberry Pi 4B** | [ CAD ](https://grabcad.com/library/raspberry-pi-4-model-b-1) | [ Amazon ](https://www.amazon.fr/dp/B07TGBLK33/)
 * **128 x 64 I2C OLED**, [ CAD ](https://grabcad.com/library/arduino-0-91-0-96-inch-oled-1) | [ Amazon ](https://www.amazon.fr/dp/B0CN96XB5Y)
@@ -16,6 +16,10 @@ This is a remake of [Plastic Player 2](https://brendandawes.com/projects/plastic
 * **NFC Stickers** | [ Amazon ](https://www.amazon.fr/dp/B0BVFM8YVD)
 * 3D printed enclosure and slides (available on this repo)
 * a Spotify Premium account
+
+## Hardware
+
+![](hw/wiring.png)
 
 ## Building
 

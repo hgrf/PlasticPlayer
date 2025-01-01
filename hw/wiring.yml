@@ -1,0 +1,78 @@
+connectors:
+  raspi:
+    subtype: male
+    pincount: 40
+    pins:      [  1,      3,      5,   6,      7,   9,      11,      13,  14,      16,  17,      19,  20,     21,      23,     24,      37,  39]
+    pinlabels: [3V3, GPIO_2, GPIO_3, GND, GPIO_4, GND, GPIO_17, GPIO_27, GND, GPIO_23, 3V3, GPIO_10, GND, GPIO_9, GPIO_11, GPIO_8, GPIO_26, GND]
+  btn_left:
+    subtype: male
+    pinlabels: [PLUS, MINUS]
+  btn_right:
+    subtype: male
+    pinlabels: [PLUS, MINUS]
+  display:
+    subtype: male
+    pinlabels: [GND, VCC, SDA, SCL]
+  rfid:
+    subtype: male
+    pinlabels: [VCC, RST, GND, MISO, MOSI, SCK, NSS, IRQ]
+  led:
+    subtype: male
+    pinlabels: [VCC, GND]
+
+cables:
+  W1:
+    show_name: false
+    show_wirecount: false
+    color_code: DIN
+    wirecount: 2
+
+  W2:
+    show_name: false
+    show_wirecount: false
+    color_code: DIN
+    wirecount: 2
+
+  W3:
+    show_name: false
+    show_wirecount: false
+    color_code: DIN
+    wirecount: 4
+
+  W4:
+    show_name: false
+    show_wirecount: false
+    color_code: DIN
+    wirecount: 8
+
+  W5:
+    show_name: false
+    show_wirecount: false
+    color_code: DIN
+    wirecount: 2
+
+connections:
+  -
+    - raspi: [37, 39]
+    - W1: [1, 2]
+    - btn_left: [1, 2]
+
+  -
+    - raspi: [16, 14]
+    - W2: [1, 2]
+    - btn_right: [1, 2]
+
+  -
+    - raspi: [6, 1, 3, 5]
+    - W3: [1-4]
+    - display: [1-4]
+
+  -
+    - raspi: [17, 13, 20, 21, 19, 23, 24, 11]
+    - W4: [1-8]
+    - rfid: [1-8]
+
+  -
+    - raspi: [7, 9]
+    - W5: [1, 2]
+    - led: [1, 2]
