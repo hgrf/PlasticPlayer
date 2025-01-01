@@ -39,6 +39,9 @@ i2c mw 0x3c 0x00.1 0x22; i2c mw 0x3c 0x00.1 0x00; i2c mw 0x3c 0x00.1 0x07		# SSD
 load mmc 0:1 ${kernel_addr_r} /splash.bin
 i2c write ${kernel_addr_r} 0x3c 0x40.1 0x400 -s
 
+# switch off LED
+gpio clear 4
+
 raucargs=unset
 for BOOT_SLOT in "${BOOT_ORDER}"; do
 	if test "x${raucargs}" != "xunset"; then
