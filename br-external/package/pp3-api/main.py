@@ -82,7 +82,7 @@ async def wifi_register(network: WifiNetwork):
     # that requires additional dependencies (GLib mainloop)
     # https://git.kernel.org/pub/scm/network/wireless/iwd.git/tree/test/simple-agent
     id = network.id.rstrip("_psk")
-    with open(f"/var/lib/iwd/={id}.psk", "w") as f:
+    with open(f"/data/iwd/={id}.psk", "w") as f:
         f.write("[Security]\n")
         f.write(f"Passphrase={network.passphrase}\n")
     return ""
