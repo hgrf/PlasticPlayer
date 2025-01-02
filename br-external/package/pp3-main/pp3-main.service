@@ -1,0 +1,14 @@
+[Unit]
+Description=PlasticPlayer3 main application
+
+[Service]
+User=user
+Type=simple
+ExecStart=/usr/bin/pp3-main
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=jorunal
+
+[Install]
+WantedBy=multi-user.target

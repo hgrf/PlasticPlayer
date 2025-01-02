@@ -20,4 +20,9 @@ define PP3_MAIN_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/librespot_event_handler.sh $(TARGET_DIR)/usr/bin/librespot_event_handler.sh
 endef
 
+define PP3_MAIN_INSTALL_INIT_SYSTEMD
+	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_BR2RAUC_PATH)/package/pp3-main/pp3-main.service \
+		$(TARGET_DIR)/usr/lib/systemd/system/pp3-main.service
+endef
+
 $(eval $(generic-package))
