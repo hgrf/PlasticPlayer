@@ -9,6 +9,7 @@
 #include <menu.h>
 
 #include "librespot.h"
+#include "wifistatus.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
@@ -226,6 +227,8 @@ void ui_process(void) {
     ITEM *cur;
     void (*p)(void);
     struct timespec timeout = { 0, 200000 };
+    wifi_status_t wifi_status;
+    const char* wifi_status_str;
 
     res = gpiod_line_event_wait_bulk(&gs_lines, &timeout, &gs_evt_lines);
     if (res == 1)
@@ -283,9 +286,26 @@ void ui_process(void) {
         }
     } else if (res == 0 && millis() > g_last_ts_all + MENU_TIMEOUT_MS) {
         /* timeout occured, show status screen */
-        pthread_mutex_lock(&g_mutex);
         unpost_menu(g_menu);
         werase(g_menu_win);
+        wifi_status = get_wifi_status();
+        switch(wifi_status) {
+            case WIFI_STATUS_CONNECTED:
+                wifi_status_str = "WiFi connected";
+                break;
+            case WIFI_STATUS_CONNECTING:
+                wifi_status_str = "WiFi connecting";
+                break;
+            case WIFI_STATUS_DISCONNECTED:
+                wifi_status_str = "WiFi disconnected";
+                break;
+            default:
+                wifi_status_str = "WiFi error";
+                break;
+        }
+        print_scrolling(4, wifi_status_str);
+
+        pthread_mutex_lock(&g_mutex);
         print_scrolling(0, g_status);
         print_scrolling(1, g_artists);
         print_scrolling(2, g_album);

@@ -8,6 +8,7 @@
 
 #include "librespot.h"
 #include "ui.h"
+#include "wifistatus.h"
 
 #define NDEF_START_PAGE 4
 #define NDEF_START_OFFSET 2
