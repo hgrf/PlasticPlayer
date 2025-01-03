@@ -146,6 +146,7 @@ static void load_uri(const std::string& uri) {
     }
     g_current_uri = uri;
 
+    ui_led_on();
     std::string cmd = "load spotify:" + uri.substr(base_uri.length());
     std::replace(cmd.begin(), cmd.end(), '/', ':');
     std::cout << "cmd: " << cmd << std::endl;
@@ -190,6 +191,7 @@ static void tag_reader_thread_entry(void) {
             std::cout << "NDEF message is invalid" << std::endl;
             g_tag_remove_counter++;
             if (g_tag_remove_counter >= 3) {
+                ui_led_off();
                 g_current_uri.clear();
                 librespot_send_cmd("pause");
             }

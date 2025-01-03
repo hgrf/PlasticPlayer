@@ -18,12 +18,15 @@
 #define GPIO_DEVICE_LINE_BTN_RIGHT 23
 #define DEBOUNCE_PERIOD_MS 200
 
+#define GPIO_DEVICE_LINE_LED 4
+
 static unsigned int g_line_offsets[] = { GPIO_DEVICE_LINE_BTN_LEFT, GPIO_DEVICE_LINE_BTN_RIGHT };
 static unsigned long g_last_ts[ARRAY_SIZE(g_line_offsets)];
 static unsigned long g_last_ts_all;
 static struct gpiod_chip *gs_chip;
 static struct gpiod_line_bulk gs_lines;
 static struct gpiod_line_bulk gs_evt_lines;
+static struct gpiod_line *gs_led_line;
 
 #define WINDOW_WIDTH 16
 #define SCROLL_PADDING 5
@@ -75,7 +78,7 @@ static const struct menu_item choices[] = {
     { "Bluetooth", menu_action_bt },
 };
 
-static int btn_init(void) {
+static int btn_led_init(void) {
     gs_chip = gpiod_chip_open(GPIO_DEVICE_NAME);
     if (gs_chip == NULL)
     {
@@ -90,6 +93,20 @@ static int btn_init(void) {
         return -1;
     }
 
+    gs_led_line = gpiod_chip_get_line(gs_chip, GPIO_DEVICE_LINE_LED);
+    if (gs_led_line == NULL)
+    {
+        perror("gpio: get line failed.\n");
+        gpiod_chip_close(gs_chip);
+        return -1;
+    }
+
+    if (gpiod_line_request_output(gs_led_line, "led", 0) < 0) {
+        perror("gpio: request output failed.\n");
+        gpiod_chip_close(gs_chip);
+        return -1;
+    }
+
     if (gpiod_line_request_bulk_falling_edge_events_flags(&gs_lines, "gpiointerrupt", GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP) < 0)
     {
         perror("gpio: set edge events failed.\n");
@@ -100,7 +117,7 @@ static int btn_init(void) {
     return 0;
 }
 
-static void btn_deinit(void) {
+static void btn_led_deinit(void) {
     gpiod_chip_close(gs_chip);
 }
 
@@ -175,11 +192,11 @@ static void menu_deinit(void) {
 int ui_init(void) {
     pthread_mutex_init(&g_mutex, NULL);
 
-    if (btn_init() < 0)
+    if (btn_led_init() < 0)
         return -1;
 
     if (menu_init() < 0) {
-        btn_deinit();
+        btn_led_deinit();
         return -1;
     }
 
@@ -351,9 +368,21 @@ void ui_update_track_info(const char *artists, const char *album, const char *ti
     pthread_mutex_unlock(&g_mutex);
 }
 
+void ui_led_on(void) {
+    if (gpiod_line_set_value(gs_led_line, 1) < 0) {
+        perror("gpio: set value failed.\n");
+    }
+}
+
+void ui_led_off(void) {
+    if (gpiod_line_set_value(gs_led_line, 0) < 0) {
+        perror("gpio: set value failed.\n");
+    }
+}
+
 void ui_deinit(void) {
     menu_deinit();    
-    btn_deinit();
+    btn_led_deinit();
     pthread_mutex_destroy(&g_mutex);
 
     if (g_status != NULL) {
