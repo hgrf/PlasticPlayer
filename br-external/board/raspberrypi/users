@@ -1,2 +1,2 @@
-user 1000 user 1000 - /home/br2rauc /bin/sh adm,audio,cdrom,dialout,floppy,plugdev,staff,sudo,video,spi,gpiod Default user
+user 1000 user 1000 - /home/br2rauc /bin/sh adm,audio,cdrom,dialout,floppy,plugdev,staff,sudo,video,spi,gpiod,pulse-access Default user
 

@@ -19,10 +19,10 @@ LIBRESPOT_CARGO_ENV = \
 LIBRESPOT_BIN_DIR = target/$(RUSTC_TARGET_NAME)/release
 
 LIBRESPOT_CARGO_BUILD_OPTS = --no-default-features \
-		      --features=alsa-backend
+		      --features "pulseaudio-backend with-libmdns"
 
 
-define SPOTIFYD_INSTALL_TARGET_CMDS
+define LIBRESPOT_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/$(LIBRESPOT_BIN_DIR)/librespot \
 		$(TARGET_DIR)/usr/bin/librespot
 endef
