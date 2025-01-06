@@ -1,7 +1,7 @@
 test -n "${BOOT_ORDER}" || setenv BOOT_ORDER "A B"
 test -n "${BOOT_A_LEFT}" || setenv BOOT_A_LEFT 3
 test -n "${BOOT_B_LEFT}" || setenv BOOT_B_LEFT 3
-test -n "${bootargs_default}" || setenv bootargs_default coherent_pool=1M vc_mem.mem_base=0x3ec00000 vc_mem.mem_size=0x40000000 rootwait console=tty1 console=ttyAMA0,115200
+test -n "${bootargs_default}" || setenv bootargs_default coherent_pool=1M vc_mem.mem_base=0x3ec00000 vc_mem.mem_size=0x40000000 rootwait 8250.nr_uarts=1 console=ttyS0,115200
 test -n "${DTB_FILE}" || setenv DTB_FILE bcm2711-rpi-4-b.dtb
 
 # RPi firmware uses a dynamic fdt_addr, but U-Boot does not use the fw

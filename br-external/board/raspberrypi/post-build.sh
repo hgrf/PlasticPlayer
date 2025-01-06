@@ -10,6 +10,16 @@ BOARD_NAME="$(basename ${BOARD_DIR})"
 # If VERSION is unset, fallback to the Buildroot version
 RAUC_VERSION=${VERSION:-${BR2_VERSION_FULL}}
 
+# Add rpi-firmware device tree for boot
+#
+# NOTE: uboot is configured so that the device tree is "provided by the board (e.g.
+# a previous loader) at runtime" (CONFIG_OF_BOARD). We want to use the rpi-firmware
+# device tree here, but BR2_PACKAGE_RPI_FIRMWARE_INSTALL_DTBS depends on
+# !BR2_LINUX_KERNEL_DTS_SUPPORT. This is a workaround to get the device tree into
+# the boot partition.
+cp ${BR2_EXTERNAL_BR2RAUC_PATH}/../output/build/rpi-firmware-5476720d52cf579dc1627715262b30ba1242525e/boot/bcm2711-rpi-4-b.dtb \
+	${BINARIES_DIR}/rpi-firmware/bcm2711-rpi-4-b.dtb
+
 # Convert and add splash screen for u-boot
 /usr/bin/python3 ${BR2_EXTERNAL_BR2RAUC_PATH}/../uboot-splash/splash.py
 
