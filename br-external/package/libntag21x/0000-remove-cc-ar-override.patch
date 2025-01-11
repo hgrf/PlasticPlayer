@@ -1,0 +1,17 @@
+diff --git a/project/raspberrypi4b/Makefile b/project/raspberrypi4b/Makefile
+index 16ed47e..324afa3 100644
+--- a/project/raspberrypi4b/Makefile
++++ b/project/raspberrypi4b/Makefile
+@@ -46,12 +46,6 @@ LIB_INSTL_DIRS := $(INSTL_DIRS)/lib
+ # set the bin directories
+ BIN_INSTL_DIRS := $(INSTL_DIRS)/bin
+ 
+-# set the compiler
+-CC := gcc
+-
+-# set the ar tool
+-AR := ar
+-
+ # set the packages name
+ PKGS := libgpiod
+ 
