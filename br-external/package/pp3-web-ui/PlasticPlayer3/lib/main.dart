@@ -24,12 +24,10 @@ class MyApp extends StatelessWidget {
 
 final _router = GoRouter(
   initialLocation: '/wifi',
-  debugLogDiagnostics: true,
   routes: [
     ShellRoute(
         builder: (context, state, child) => Scaffold(
-                body: Expanded(
-                    child: Row(
+                body: Row(
               children: [
                 Drawer(
                     child: ListView(
@@ -58,7 +56,7 @@ final _router = GoRouter(
                 )),
                 Expanded(child: child)
               ],
-            ))),
+            )),
         routes: [
           GoRoute(
               path: '/wifi',

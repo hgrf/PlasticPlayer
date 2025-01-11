@@ -108,90 +108,99 @@ class _WifiPageState extends State<WifiPage> {
           backgroundColor: Colors.blue,
           title: const Text('Wifi'),
         ),
-        body: Center(
-            child: SizedBox(
-                width: 600,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Wifi state: ${_wifiState.state}'),
-                    if (_wifiState.state == 'connected' ||
-                        _wifiState.state == 'connecting') ...[
-                      Text("to ${_wifiState.connectedNetwork?.ssid ?? "none"}"),
-                      ElevatedButton(
-                          onPressed: () =>
-                              post(Uri.parse('$_baseUri/wifi/disconnect')),
-                          child: const Text('Disconnect'))
-                    ],
-                    const Text("Known networks:"),
-                    ..._knownNetworks.map((network) => ListTile(
-                        leading: !_scanResults.any((e) => e.id == network.id)
-                            ? const Icon(Icons.wifi_off)
-                            : const Icon(Icons.wifi),
-                        trailing: ElevatedButton(
-                            child: const Text("Forget"),
-                            onPressed: () async {
-                              await post(Uri.parse('$_baseUri/wifi/forget'),
-                                  headers: {"Content-Type": "application/json"},
-                                  body: jsonEncode({"id": network.id}));
-                              _getKnownNetworks();
-                            }),
-                        title: Text(network.ssid),
-                        onTap: () => !_scanResults
-                                .any((e) => e.id == network.id)
-                            ? null
-                            : post(Uri.parse('$_baseUri/wifi/connect'),
-                                headers: {"Content-Type": "application/json"},
-                                body: jsonEncode({"id": network.id})))),
-                    const Text("Available networks:"),
-                    if (_isScanning)
-                      const Row(mainAxisSize: MainAxisSize.min, children: [
-                        CircularProgressIndicator(),
-                        SizedBox(width: 20),
-                        Text("Scanning...")
-                      ]),
-                    ..._scanResults
-                        .where((e) => !_knownNetworks.any((n) => e.id == n.id))
-                        .map((network) => ListTile(
-                            leading: const Icon(Icons.wifi),
+        floatingActionButton: FloatingActionButton(
+            onPressed: _isScanning ? null : _scan, child: const Text('Scan')),
+        body: SingleChildScrollView(
+            child: Center(
+                child: SizedBox(
+                    width: 600,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Wifi state: ${_wifiState.state}'),
+                        if (_wifiState.state == 'connected' ||
+                            _wifiState.state == 'connecting') ...[
+                          Text(
+                              "to ${_wifiState.connectedNetwork?.ssid ?? "none"}"),
+                          ElevatedButton(
+                              onPressed: () =>
+                                  post(Uri.parse('$_baseUri/wifi/disconnect')),
+                              child: const Text('Disconnect'))
+                        ],
+                        const Text("Known networks:"),
+                        ..._knownNetworks.map((network) => ListTile(
+                            leading:
+                                !_scanResults.any((e) => e.id == network.id)
+                                    ? const Icon(Icons.wifi_off)
+                                    : const Icon(Icons.wifi),
+                            trailing: ElevatedButton(
+                                child: const Text("Forget"),
+                                onPressed: () async {
+                                  await post(Uri.parse('$_baseUri/wifi/forget'),
+                                      headers: {
+                                        "Content-Type": "application/json"
+                                      },
+                                      body: jsonEncode({"id": network.id}));
+                                  _getKnownNetworks();
+                                }),
                             title: Text(network.ssid),
-                            onTap: () async {
-                              final passphrase = await showDialog<String>(
-                                  context: context,
-                                  builder: (context) {
-                                    final controller = TextEditingController();
-                                    return AlertDialog(
-                                      title: const Text('Enter passphrase'),
-                                      content: TextField(
-                                        controller: controller,
-                                      ),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context)
-                                                .pop(controller.text);
-                                          },
-                                          child: const Text('OK'),
-                                        ),
-                                      ],
-                                    );
-                                  });
-                              if (passphrase != null) {
-                                await post(Uri.parse('$_baseUri/wifi/register'),
+                            onTap: () => !_scanResults
+                                    .any((e) => e.id == network.id)
+                                ? null
+                                : post(Uri.parse('$_baseUri/wifi/connect'),
                                     headers: {
                                       "Content-Type": "application/json"
                                     },
-                                    body: jsonEncode({
-                                      "id": network.id,
-                                      "passphrase": passphrase
-                                    }));
-                                _getKnownNetworks();
-                              }
-                            })),
-                    ElevatedButton(
-                        onPressed: _isScanning ? null : _scan,
-                        child: const Text('Scan')),
-                  ],
-                ))));
+                                    body: jsonEncode({"id": network.id})))),
+                        const Text("Available networks:"),
+                        if (_isScanning)
+                          const Row(mainAxisSize: MainAxisSize.min, children: [
+                            CircularProgressIndicator(),
+                            SizedBox(width: 20),
+                            Text("Scanning...")
+                          ]),
+                        ..._scanResults
+                            .where(
+                                (e) => !_knownNetworks.any((n) => e.id == n.id))
+                            .map((network) => ListTile(
+                                leading: const Icon(Icons.wifi),
+                                title: Text(network.ssid),
+                                onTap: () async {
+                                  final passphrase = await showDialog<String>(
+                                      context: context,
+                                      builder: (context) {
+                                        final controller =
+                                            TextEditingController();
+                                        return AlertDialog(
+                                          title: const Text('Enter passphrase'),
+                                          content: TextField(
+                                            controller: controller,
+                                          ),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context)
+                                                    .pop(controller.text);
+                                              },
+                                              child: const Text('OK'),
+                                            ),
+                                          ],
+                                        );
+                                      });
+                                  if (passphrase != null) {
+                                    await post(
+                                        Uri.parse('$_baseUri/wifi/register'),
+                                        headers: {
+                                          "Content-Type": "application/json"
+                                        },
+                                        body: jsonEncode({
+                                          "id": network.id,
+                                          "passphrase": passphrase
+                                        }));
+                                    _getKnownNetworks();
+                                  }
+                                })),
+                      ],
+                    )))));
   }
 }
