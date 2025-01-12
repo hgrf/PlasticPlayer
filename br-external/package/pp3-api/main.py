@@ -48,6 +48,9 @@ device = dbus.Interface(bus.get_object("net.connman.iwd", devpath),
 installer = dbus.Interface(bus.get_object("de.pengutronix.rauc", '/'),
                             "de.pengutronix.rauc.Installer")
 
+adapter = dbus.Interface(bus.get_object("org.bluez", "/org/bluez/hci0"), "org.bluez.Adapter1")
+bt_manager = dbus.Interface(bus.get_object("org.bluez", "/"), "org.freedesktop.DBus.ObjectManager")
+
 
 @app.get("/wifi/state", response_model=WifiState)
 async def wifi_get_state():
@@ -133,6 +136,57 @@ async def wifi_get_scan_results():
     devices = []
     for d in device.GetOrderedNetworks():
         devices.append([d[0].split("/")[-1], d[1]])
+    return devices
+
+@app.post("/bluetooth/scan")
+async def bluetooth_scan():
+    adapter.StartDiscovery()
+    return ""
+
+@app.post("/bluetooth/stop_scan")
+async def bluetooth_stop_scan():
+    adapter.StopDiscovery()
+    return ""
+
+@app.post("/bluetooth/pair/{mac}")
+async def bluetooth_pair(mac: str):
+    mac = mac.replace(":", "_")
+    device = dbus.Interface(bus.get_object("org.bluez", f"/org/bluez/hci0/dev_{mac}"), "org.bluez.Device1")
+    device.Pair()
+    return ""
+
+@app.post("/bluetooth/unpair/{mac}")
+async def bluetooth_unpair(mac: str):
+    mac = mac.replace(":", "_")
+    adapter.RemoveDevice(f"/org/bluez/hci0/dev_{mac}")
+    return ""
+
+@app.post("/bluetooth/connect/{mac}")
+async def bluetooth_connect(mac: str):
+    mac = mac.replace(":", "_")
+    device = dbus.Interface(bus.get_object("org.bluez", f"/org/bluez/hci0/dev_{mac}"), "org.bluez.Device1")
+    device.Connect()
+    return ""
+
+@app.post("/bluetooth/disconnect/{mac}")
+async def bluetooth_disconnect(mac: str):
+    mac = mac.replace(":", "_")
+    device = dbus.Interface(bus.get_object("org.bluez", f"/org/bluez/hci0/dev_{mac}"), "org.bluez.Device1")
+    device.Disconnect()
+    return ""
+
+@app.get("/bluetooth/is_scanning")
+async def bluetooth_is_scanning():
+    return adapter.Get("org.bluez.Adapter1", "Discovering", dbus_interface=dbus.PROPERTIES_IFACE)
+
+@app.get("/bluetooth/devices")
+async def bluetooth_get_devices():
+    objs = bt_manager.GetManagedObjects()
+    devices = []
+    for path, interfaces in objs.items():
+        if "org.bluez.Device1" in interfaces:
+            device = interfaces["org.bluez.Device1"]
+            devices.append(device)
     return devices
 
 @app.get("/firmware/status")

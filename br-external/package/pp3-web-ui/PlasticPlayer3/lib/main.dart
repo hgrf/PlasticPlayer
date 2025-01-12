@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'bluetooth_page.dart';
 import 'firmware_page.dart';
 import 'wifi_page.dart';
 
@@ -36,6 +37,14 @@ final _router = GoRouter(
                       child: Text("Plastic Player 3"),
                     ),
                     ListTile(
+                      title: const Text('Bluetooth'),
+                      selected: GoRouterState.of(context).fullPath == '/bluetooth',
+                      selectedTileColor: Colors.grey[300],
+                      onTap: () {
+                        context.go('/bluetooth');
+                      },
+                    ),
+                    ListTile(
                       title: const Text('Wifi'),
                       selected: GoRouterState.of(context).fullPath == '/wifi',
                       selectedTileColor: Colors.grey[300],
@@ -58,6 +67,9 @@ final _router = GoRouter(
               ],
             )),
         routes: [
+          GoRoute(path: '/bluetooth', pageBuilder: (context, state) {
+            return const MaterialPage(child: BluetoothPage());
+          }),
           GoRoute(
               path: '/wifi',
               pageBuilder: (context, state) {
