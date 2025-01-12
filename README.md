@@ -10,11 +10,21 @@ This is a remake of [Plastic Player 2](https://brendandawes.com/projects/plastic
   * https://grabcad.com/library/ssd1306-oled-display-128x64-1
   * https://grabcad.com/library/i2c-0-96-oled-ssd1306-display-1
   * https://grabcad.com/library/display-oled-ssd1306-de-0-96-1
+  * Even when ordering twice from the same supplier (Amazon Link above), you can end up with 21 vs. 22 mm horizontal screw spacing
 * [ **Joy-IT RFID module** ](https://joy-it.net/en/products/SBC-RFID-RC522) | [ CAD ](https://grabcad.com/library/rfid-rc5222-1) | [ Amazon ](https://www.amazon.fr/dp/B07B3N1WTL)
   * _TODO_: here too it seems the screw spacing does not 100% correspond
 * 2 x **Sanwa Arcade Buttons** | [ CAD ](https://grabcad.com/library/sanwa-obsf-24-arcade-button-1) | [ Amazon ](https://www.amazon.fr/dp/B075DCB7LT)
 * **NFC Stickers** | [ Amazon ](https://www.amazon.fr/dp/B0BVFM8YVD)
 * 3D printed enclosure and slides (available on this repo)
+* **screws**
+  * display screws: 4x M1.7*5 PA Phillips self-tapping screw
+  * Raspberry Pi screws: 4x M2*4
+  * RF tag reader screw: 2x M3*4
+  * case screws: 3x M3*8
+* **magnets**
+  * 2x Neodyme magnet 6x2 mm
+  * 2x Neodyme magnet 3x2 mm
+* **rubber feet** | e.g. cylindrical 8.5x2 mm [Amazon](https://www.amazon.fr/dp/B09KTCFC1L)
 * a Spotify Premium account
 
 ## Hardware
