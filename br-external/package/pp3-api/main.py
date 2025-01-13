@@ -147,6 +147,8 @@ async def wifi_get_scan_results():
 
 @app.post("/bluetooth/scan")
 async def bluetooth_scan():
+    # c.f. https://github.com/bluez/bluez/blob/5.79/lib/uuid.h#L33
+    adapter.SetDiscoveryFilter({"UUIDs": ["0000110b-0000-1000-8000-00805f9b34fb"]})
     adapter.StartDiscovery()
     return ""
 
