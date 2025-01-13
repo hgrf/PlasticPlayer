@@ -17,8 +17,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
         title: "Plastic Player 3",
         theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
+            appBarTheme: const AppBarTheme(
+                backgroundColor: Colors.blueGrey,
+                foregroundColor: Colors.white)),
         routerConfig: _router);
   }
 }
@@ -30,56 +32,56 @@ final _router = GoRouter(
         builder: (context, state, child) => Scaffold(
                 body: Row(
               children: [
-                Drawer(
+                SizedBox(
+                    width: 250,
                     child: ListView(
-                  children: [
-                    const DrawerHeader(
-                      child: Text("Plastic Player 3"),
-                    ),
-                    ListTile(
-                      title: const Text('Bluetooth'),
-                      selected: GoRouterState.of(context).fullPath == '/bluetooth',
-                      selectedTileColor: Colors.grey[300],
-                      onTap: () {
-                        context.go('/bluetooth');
-                      },
-                    ),
-                    ListTile(
-                      title: const Text('Wifi'),
-                      selected: GoRouterState.of(context).fullPath == '/wifi',
-                      selectedTileColor: Colors.grey[300],
-                      onTap: () {
-                        context.go('/wifi');
-                      },
-                    ),
-                    ListTile(
-                      title: const Text('Firmware'),
-                      selected:
-                          GoRouterState.of(context).fullPath == '/firmware',
-                      selectedTileColor: Colors.grey[300],
-                      onTap: () {
-                        context.go('/firmware');
-                      },
-                    ),
-                  ],
-                )),
+                      children: [
+                        Image.asset('images/logo.png', width: 200, height: 100),
+                        const Divider(),
+                        ListTile(
+                          title: const Text('Bluetooth'),
+                          leading: const Icon(Icons.bluetooth),
+                          selected: GoRouterState.of(context).fullPath ==
+                              '/bluetooth',
+                          selectedTileColor: Colors.grey[300],
+                          onTap: () => context.go('/bluetooth'),
+                        ),
+                        ListTile(
+                          title: const Text('Wifi'),
+                          leading: const Icon(Icons.wifi),
+                          selected:
+                              GoRouterState.of(context).fullPath == '/wifi',
+                          selectedTileColor: Colors.grey[300],
+                          onTap: () => context.go('/wifi'),
+                        ),
+                        ListTile(
+                          title: const Text('Firmware'),
+                          leading: const Icon(Icons.memory),
+                          selected:
+                              GoRouterState.of(context).fullPath == '/firmware',
+                          selectedTileColor: Colors.grey[300],
+                          onTap: () => context.go('/firmware'),
+                        ),
+                      ],
+                    )),
                 Expanded(child: child)
               ],
             )),
         routes: [
-          GoRoute(path: '/bluetooth', pageBuilder: (context, state) {
-            return const MaterialPage(child: BluetoothPage());
-          }),
           GoRoute(
-              path: '/wifi',
-              pageBuilder: (context, state) {
-                return const MaterialPage(child: WifiPage());
-              }),
+              path: '/bluetooth',
+              pageBuilder: (context, state) =>
+                  const MaterialPage(child: BluetoothPage())),
           GoRoute(
-              path: '/firmware',
-              pageBuilder: (context, state) {
-                return const MaterialPage(child: FirmwarePage());
-              }),
+            path: '/wifi',
+            pageBuilder: (context, state) =>
+                const MaterialPage(child: WifiPage()),
+          ),
+          GoRoute(
+            path: '/firmware',
+            pageBuilder: (context, state) =>
+                const MaterialPage(child: FirmwarePage()),
+          ),
         ])
   ],
 );

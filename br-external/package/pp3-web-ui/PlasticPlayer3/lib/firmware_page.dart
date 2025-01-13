@@ -176,10 +176,7 @@ class _FirmwarePageState extends State<FirmwarePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: const Text("Firmware"),
-      ),
+      appBar: AppBar(title: const Text("Firmware")),
       body: Center(
         child: SizedBox(
             width: 600,
@@ -199,7 +196,8 @@ class _FirmwarePageState extends State<FirmwarePage> {
                   onPressed: () => _uploadFirmware(),
                 ),
                 _state.display(),
-                if (_state is _InstallingState && (_state as _InstallingState).progress == 100)
+                if (_state is _InstallingState &&
+                    (_state as _InstallingState).progress == 100)
                   ElevatedButton(
                     child: const Text("Reboot"),
                     onPressed: () async {

@@ -87,40 +87,49 @@ class _BluetoothPageState extends State<BluetoothPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          title: const Text('Bluetooth'),
-        ),
+        appBar: AppBar(title: const Text('Bluetooth')),
         floatingActionButton: FloatingActionButton(
-            onPressed: _isScanning ? _stopScan : _scan, child:  Text(_isScanning ? 'Stop' : 'Scan')),
-        body: SingleChildScrollView(
-            child: Center(
-                child: SizedBox(
-                    width: 600,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text("Available devices:"),
-                        if (_isScanning)
-                          const Row(mainAxisSize: MainAxisSize.min, children: [
-                            CircularProgressIndicator(),
-                            SizedBox(width: 20),
-                            Text("Scanning...")
-                          ]),
-                        _devices.isEmpty
-                            ? const Text("No devices found")
-                            : Column(
-                                children: _devices
-                                    .map((device) => ListTile(
-                                        title: Text(device.name),
-                                        subtitle: Text(device.address),
-                                        leading: device.isConnected
-                                            ? const Icon(
-                                                Icons.bluetooth_connected)
-                                            : const Icon(Icons.bluetooth),
-                                        trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                          children: [
+            onPressed: _isScanning ? _stopScan : _scan,
+            child: Text(_isScanning ? 'Stop' : 'Scan')),
+        body: Center(
+            child: SizedBox(
+                width: 600,
+                child: Column(
+                  children: [
+                    if (_isScanning)
+                      const Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(width: 20),
+                                Text("Scanning...")
+                              ])),
+                    _devices.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.info),
+                                  SizedBox(width: 10),
+                                  Text("No devices found")
+                                ]))
+                        : Expanded(
+                            child: ListView(
+                            children: _devices
+                                .map((device) => ListTile(
+                                    title: Text(device.name),
+                                    subtitle: Text(device.address),
+                                    leading: device.isConnected
+                                        ? const Icon(Icons.bluetooth_connected)
+                                        : const Icon(Icons.bluetooth),
+                                    trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
                                           if (device.isConnected)
                                             ElevatedButton(
                                               onPressed: () =>
@@ -132,6 +141,7 @@ class _BluetoothPageState extends State<BluetoothPage> {
                                               onPressed: () => _connect(device),
                                               child: const Text("Connect"),
                                             ),
+                                          const SizedBox(width: 10),
                                           if (device.isPaired)
                                             ElevatedButton(
                                               onPressed: () => _unpair(device),
@@ -143,9 +153,9 @@ class _BluetoothPageState extends State<BluetoothPage> {
                                               child: const Text("Pair"),
                                             )
                                         ])))
-                                    .toList(),
-                              ),
-                      ],
-                    )))));
+                                .toList(),
+                          ))
+                  ],
+                ))));
   }
 }

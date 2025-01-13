@@ -104,10 +104,7 @@ class _WifiPageState extends State<WifiPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          title: const Text('Wifi'),
-        ),
+        appBar: AppBar(title: const Text('Wifi')),
         floatingActionButton: FloatingActionButton(
             onPressed: _isScanning ? null : _scan, child: const Text('Scan')),
         body: SingleChildScrollView(
@@ -117,42 +114,88 @@ class _WifiPageState extends State<WifiPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Wifi state: ${_wifiState.state}'),
-                        if (_wifiState.state == 'connected' ||
-                            _wifiState.state == 'connecting') ...[
-                          Text(
-                              "to ${_wifiState.connectedNetwork?.ssid ?? "none"}"),
-                          ElevatedButton(
-                              onPressed: () =>
-                                  post(Uri.parse('$_baseUri/wifi/disconnect')),
-                              child: const Text('Disconnect'))
-                        ],
-                        const Text("Known networks:"),
+                        const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Text("Known networks:",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold))),
                         ..._knownNetworks.map((network) => ListTile(
-                            leading:
-                                !_scanResults.any((e) => e.id == network.id)
-                                    ? const Icon(Icons.wifi_off)
-                                    : const Icon(Icons.wifi),
-                            trailing: ElevatedButton(
-                                child: const Text("Forget"),
-                                onPressed: () async {
-                                  await post(Uri.parse('$_baseUri/wifi/forget'),
-                                      headers: {
-                                        "Content-Type": "application/json"
-                                      },
-                                      body: jsonEncode({"id": network.id}));
-                                  _getKnownNetworks();
-                                }),
-                            title: Text(network.ssid),
-                            onTap: () => !_scanResults
-                                    .any((e) => e.id == network.id)
-                                ? null
-                                : post(Uri.parse('$_baseUri/wifi/connect'),
-                                    headers: {
-                                      "Content-Type": "application/json"
-                                    },
-                                    body: jsonEncode({"id": network.id})))),
-                        const Text("Available networks:"),
+                              leading: _wifiState.connectedNetwork?.ssid ==
+                                      network.ssid
+                                  ? (_wifiState.state == "connected"
+                                      ? const Icon(Icons.network_wifi)
+                                      : const SizedBox(
+                                          height: 16,
+                                          width: 16,
+                                          child: CircularProgressIndicator()))
+                                  : !_scanResults.any((e) => e.id == network.id)
+                                      ? const Icon(Icons.wifi_off)
+                                      : const Icon(Icons.wifi),
+                              trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_wifiState.connectedNetwork?.ssid ==
+                                        network.ssid) ...[
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: () => post(Uri.parse(
+                                                '$_baseUri/wifi/disconnect')),
+                                            child: const Text("Disconnect"),
+                                          ),
+                                          const SizedBox(width: 10)
+                                        ],
+                                      )
+                                    ],
+                                    if (_wifiState.connectedNetwork?.ssid !=
+                                        network.ssid) ...[
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          ElevatedButton(
+                                            onPressed: !_scanResults.any(
+                                                    (e) => e.id == network.id)
+                                                ? null
+                                                : () => post(
+                                                    Uri.parse(
+                                                        '$_baseUri/wifi/connect'),
+                                                    headers: {
+                                                      "Content-Type":
+                                                          "application/json"
+                                                    },
+                                                    body: jsonEncode(
+                                                        {"id": network.id})),
+                                            child: const Text("Connect"),
+                                          ),
+                                          const SizedBox(width: 10)
+                                        ],
+                                      )
+                                    ],
+                                    ElevatedButton(
+                                        child: const Text("Forget"),
+                                        onPressed: () async {
+                                          await post(
+                                              Uri.parse(
+                                                  '$_baseUri/wifi/forget'),
+                                              headers: {
+                                                "Content-Type":
+                                                    "application/json"
+                                              },
+                                              body: jsonEncode(
+                                                  {"id": network.id}));
+                                          _getKnownNetworks();
+                                        })
+                                  ]),
+                              title: Text(network.ssid),
+                            )),
+                        const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Text("Available networks:",
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold))),
                         if (_isScanning)
                           const Row(mainAxisSize: MainAxisSize.min, children: [
                             CircularProgressIndicator(),
