@@ -1,4 +1,5 @@
 import dbus
+import os
 import subprocess
 
 from fastapi import FastAPI, File, UploadFile
@@ -71,19 +72,7 @@ async def wifi_get_known_networks():
         networks.append([path.split("/")[-1], network])
     return networks
 
-@app.post("/wifi/forget")
-async def wifi_forget(network: WifiNetwork):
-    id = "/net/connman/iwd/" + network.id
-    network = dbus.Interface(bus.get_object("net.connman.iwd", id),
-                                "net.connman.iwd.KnownNetwork")
-    network.Forget()
-    return ""
-
-@app.post("/wifi/register")
-async def wifi_register(network: WifiNetwork):
-    # NOTE: this could be done in a more thorough way using an agent, but
-    # that requires additional dependencies (GLib mainloop)
-    # https://git.kernel.org/pub/scm/network/wireless/iwd.git/tree/test/simple-agent
+def iwd_file_from_network(network: WifiNetwork):
     id = network.id.rstrip("_psk")
     ssid = bytes.fromhex(id).decode("utf-8")
     useText = True
@@ -94,7 +83,25 @@ async def wifi_register(network: WifiNetwork):
         id = ssid
     else:
         id = "=" + id
-    with open(f"/data/iwd/{id}.psk", "w") as f:
+    return f"/data/iwd/{id}.psk"
+
+@app.post("/wifi/forget")
+async def wifi_forget(network: WifiNetwork):
+    # NOTE: due to limited access rights of the iwd service, we need
+    #       to remove the file manually
+    # id = "/net/connman/iwd/" + network.id
+    # network = dbus.Interface(bus.get_object("net.connman.iwd", id),
+    #                             "net.connman.iwd.KnownNetwork")
+    # network.Forget()
+    os.remove(iwd_file_from_network(network))
+    return ""
+
+@app.post("/wifi/register")
+async def wifi_register(network: WifiNetwork):
+    # NOTE: this could be done in a more thorough way using an agent, but
+    # that requires additional dependencies (GLib mainloop)
+    # https://git.kernel.org/pub/scm/network/wireless/iwd.git/tree/test/simple-agent
+    with open(iwd_file_from_network(network), "w") as f:
         f.write("[Security]\n")
         f.write(f"Passphrase={network.passphrase}\n")
     return ""
