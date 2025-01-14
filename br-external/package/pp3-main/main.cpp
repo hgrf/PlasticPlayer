@@ -167,8 +167,9 @@ static void tag_reader_thread_entry(void) {
                 // c.f. https://berlin.ccc.de/~starbug/felica/NFCForum-SmartPoster_RTD_1.0.pdf
                 const auto &rec = msg.record(0);
                 if (rec.type().name() == "U") {
-                    std::cout << "Record 1 URI: " << msg.record(0).get_uri() << std::endl;
-                    load_uri(msg.record(0).get_uri());
+                    auto uri = msg.record(0).get_uri_protocol() + msg.record(0).get_uri();
+                    std::cout << "Record 1 URI: " << uri << std::endl;
+                    load_uri(uri);
                 } else if (rec.type().name() == "Sp") {
                     auto sp_msg = NDEFMessage::from_bytes(rec.payload(), 0);
                     if (sp_msg.is_valid()) {
@@ -176,8 +177,9 @@ static void tag_reader_thread_entry(void) {
                         if (sp_msg.record_count() > 0) {
                             const auto &sp_rec = sp_msg.record(0);
                             if (sp_rec.type().name() == "U") {
-                                std::cout << "Record 1 Smart Poster URI: " << sp_msg.record(0).get_uri() << std::endl;
-                                load_uri(sp_msg.record(0).get_uri());
+                                auto uri = sp_msg.record(0).get_uri_protocol() + sp_msg.record(0).get_uri();
+                                std::cout << "Record 1 Smart Poster URI: " << uri << std::endl;
+                                load_uri(uri);
                             } else {
                                 std::cout << "Record 1 Smart Poster type: " << sp_rec.type().name() << std::endl;
                             }
