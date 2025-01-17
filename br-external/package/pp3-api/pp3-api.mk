@@ -14,6 +14,8 @@ endef
 define PP3_API_INSTALL_INIT_SYSTEMD
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_BR2RAUC_PATH)/package/pp3-api/pp3-api.service \
 		$(TARGET_DIR)/usr/lib/systemd/system/pp3-api.service
+	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_BR2RAUC_PATH)/package/pp3-api/bt-agent.service \
+		$(TARGET_DIR)/usr/lib/systemd/system/bt-agent.service
 endef
 
 $(eval $(generic-package))

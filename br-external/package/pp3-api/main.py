@@ -161,6 +161,7 @@ async def bluetooth_stop_scan():
 async def bluetooth_pair(mac: str):
     mac = mac.replace(":", "_")
     device = dbus.Interface(bus.get_object("org.bluez", f"/org/bluez/hci0/dev_{mac}"), "org.bluez.Device1")
+    device.Set("org.bluez.Device1", "Trusted", True, dbus_interface=dbus.PROPERTIES_IFACE)
     device.Pair()
     return ""
 
