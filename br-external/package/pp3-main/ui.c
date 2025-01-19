@@ -8,6 +8,7 @@
 #include <gpiod.h>
 #include <menu.h>
 
+#include "bt.h"
 #include "librespot.h"
 #include "wifistatus.h"
 
@@ -31,13 +32,22 @@ static struct gpiod_line *gs_led_line;
 #define WINDOW_WIDTH 16
 #define SCROLL_PADDING 5
 #define MENU_TIMEOUT_MS 3000
-static bool g_menu_shown = false;
+typedef enum {
+    CURRENT_MENU_NONE,
+    CURRENT_MENU_MAIN,
+    CURRENT_MENU_BT,
+} current_menu_t;
+static current_menu_t g_current_menu = CURRENT_MENU_NONE;
 static int g_fd;
 static FILE *g_file;
 static SCREEN *g_scr;
 static MENU *g_menu;
+static MENU *g_menu_bt;
 static WINDOW *g_menu_win;
 static ITEM **g_menu_items;
+static unsigned int g_bt_devices_count;
+static bt_device_t *g_bt_devices;
+static ITEM **g_menu_bt_items;
 
 pthread_mutex_t g_mutex;
 static char *g_status;
@@ -55,20 +65,57 @@ static const char *no_description = "";
 static void menu_action_play_pause(void) {
     printf("Menu action: play/pause\n");
     librespot_send_cmd("play_pause\n");
+    /* hide menu */
+    g_last_ts_all = 0;
 }
 
 static void menu_action_next(void) {
     printf("Menu action: next\n");
     librespot_send_cmd("next\n");
+    /* hide menu */
+    g_last_ts_all = 0;
 }
 
 static void menu_action_prev(void) {
     printf("Menu action: previous\n");
     librespot_send_cmd("previous\n");
+    /* hide menu */
+    g_last_ts_all = 0;
+}
+
+static void menu_bt_init(void) {
+    // TODO: what if device name is too long?
+    int i;
+    g_bt_devices_count = bt_device_list_get(&g_bt_devices);
+    g_menu_bt_items = (ITEM **)calloc(g_bt_devices_count, sizeof(ITEM *));
+    for(i = 0; i < g_bt_devices_count; i++) {
+        g_menu_bt_items[i] = new_item(g_bt_devices[i].name, no_description);
+        set_item_userptr(g_menu_bt_items[i], (void *) &g_bt_devices[i]);
+    }
+	g_menu_bt = new_menu((ITEM **)g_menu_bt_items);
+    set_menu_win(g_menu_bt, g_menu_win);
+    set_menu_sub(g_menu_bt, derwin(g_menu_win, 6, 14, 1, 1));
+    set_menu_mark(g_menu_bt, ">");
+}
+
+static void menu_bt_deinit(void) {
+    int i;
+    unpost_menu(g_menu_bt);
+    free_menu(g_menu_bt);
+    for(i = 0; i < g_bt_devices_count; i++)
+        free_item(g_menu_bt_items[i]);
+    bt_device_list_free(g_bt_devices, g_bt_devices_count);
 }
 
 static void menu_action_bt(void) {
+    // TODO: append button to go back
+    // TODO: append button for scanning
     printf("Menu action: bluetooth\n");
+    unpost_menu(g_menu);
+    menu_bt_init();
+    post_menu(g_menu_bt);
+    wrefresh(g_menu_win);
+    g_current_menu = CURRENT_MENU_BT;
 }
 
 static const struct menu_item choices[] = {
@@ -237,12 +284,13 @@ static void print_scrolling(int row, const char *text)
 }
 
 void ui_process(void) {
-    int i, j, res;
+    int i, j, res, conn_res;
     int line_idx = -1;
     unsigned long ts;
     struct gpiod_line_event event;
     ITEM *cur;
     void (*p)(void);
+    bt_device_t *bt_device;
     struct timespec timeout = { 0, 200000 };
     wifi_status_t wifi_status;
     const char* wifi_status_str;
@@ -273,7 +321,7 @@ void ui_process(void) {
             g_last_ts[line_idx] = ts;
             g_last_ts_all = millis();
 
-            if (g_menu_shown) {
+            if (g_current_menu == CURRENT_MENU_MAIN) {
                 if (g_line_offsets[line_idx] == GPIO_DEVICE_LINE_BTN_LEFT) {
                     if (current_item(g_menu) == g_menu_items[ARRAY_SIZE(choices) - 1])
                         menu_driver(g_menu, REQ_FIRST_ITEM);
@@ -284,6 +332,35 @@ void ui_process(void) {
                     cur = current_item(g_menu);
                     p = (void (*)()) item_userptr(cur);
                     p();
+                }
+            } else if (g_current_menu == CURRENT_MENU_BT) {
+                if (g_line_offsets[line_idx] == GPIO_DEVICE_LINE_BTN_LEFT) {
+                    if (current_item(g_menu_bt) == g_menu_bt_items[g_bt_devices_count - 1])
+                        menu_driver(g_menu_bt, REQ_FIRST_ITEM);
+                    else
+                        menu_driver(g_menu_bt, REQ_DOWN_ITEM);
+                    wrefresh(g_menu_win);
+                } else if (g_line_offsets[line_idx] == GPIO_DEVICE_LINE_BTN_RIGHT) {
+                    cur = current_item(g_menu_bt);
+                    bt_device = (bt_device_t *) item_userptr(cur);
+                    printf("Connecting to %s\n", bt_device->id);
+                    werase(g_menu_win);
+                    mvwprintw(g_menu_win, 0, 0, "Connecting to");
+                    mvwprintw(g_menu_win, 1, 0, "%s", bt_device->name);
+                    wrefresh(g_menu_win);
+                    conn_res = bt_device_connect(bt_device->id);
+                    if (conn_res != 0) {
+                        werase(g_menu_win);
+                        mvwprintw(g_menu_win, 0, 0, "Connection");
+                        mvwprintw(g_menu_win, 1, 0, "failed");
+                        wrefresh(g_menu_win);
+                    } else {
+                        werase(g_menu_win);
+                        mvwprintw(g_menu_win, 0, 0, "Connected to");
+                        mvwprintw(g_menu_win, 1, 0, "%s", bt_device->name);
+                        wrefresh(g_menu_win);
+                    }
+                    sleep(2);
                     /* hide menu in next iteration */
                     g_last_ts_all = 0;
                 }
@@ -293,17 +370,21 @@ void ui_process(void) {
                 /* Print a border around the main window */
                 box(g_menu_win, 0, 0);
                 refresh();
-                    
+
                 /* Post the menu */
                 post_menu(g_menu);
                 wrefresh(g_menu_win);
 
-                g_menu_shown = true;
+                g_current_menu = CURRENT_MENU_MAIN;
             }
         }
     } else if (res == 0 && millis() > g_last_ts_all + MENU_TIMEOUT_MS) {
         /* timeout occured, show status screen */
-        unpost_menu(g_menu);
+        if (g_current_menu == CURRENT_MENU_MAIN) {
+            unpost_menu(g_menu);
+        } else if (g_current_menu == CURRENT_MENU_BT) {
+            menu_bt_deinit();
+        }
         werase(g_menu_win);
         wifi_status = get_wifi_status();
         switch(wifi_status) {
@@ -330,7 +411,7 @@ void ui_process(void) {
         wrefresh(g_menu_win);
         pthread_mutex_unlock(&g_mutex);
 
-        g_menu_shown = false;
+        g_current_menu = CURRENT_MENU_NONE;
     }
 }
 
