@@ -1,46 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart' as dio;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:http_parser/http_parser.dart';
+
+final _dio = dio.Dio();
 
 class FirmwarePage extends StatefulWidget {
   const FirmwarePage({super.key});
 
   @override
   State<FirmwarePage> createState() => _FirmwarePageState();
-}
-
-class ProgressMultipartRequest extends MultipartRequest {
-  final void Function(int bytes, int totalBytes) onProgress;
-
-  ProgressMultipartRequest(
-    super.method,
-    super.url, {
-    required this.onProgress,
-  });
-
-  @override
-  ByteStream finalize() {
-    final byteStream = super.finalize();
-
-    final total = contentLength;
-    int bytes = 0;
-
-    final t = StreamTransformer.fromHandlers(
-      handleData: (List<int> data, EventSink<List<int>> sink) {
-        bytes += data.length;
-        onProgress(bytes, total);
-        if (total >= bytes) {
-          sink.add(data);
-        }
-      },
-    );
-    final stream = byteStream.transform(t);
-    return ByteStream(stream);
-  }
 }
 
 class _State {
@@ -102,7 +75,6 @@ class _InstallingState extends _State {
 class _FirmwarePageState extends State<FirmwarePage> {
   static const _baseUri = 'http://10.42.0.1:9000';
   List<dynamic> _firmwareStatus = [];
-  FilePickerStatus? _filePickerStatus;
   late Timer _refreshTimer;
   _State _state = _State();
 
@@ -128,30 +100,26 @@ class _FirmwarePageState extends State<FirmwarePage> {
 
   Future<void> _uploadFirmware() async {
     final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ["raucb"],
-        onFileLoading: (status) {
-          setState(() {
-            _filePickerStatus = status;
-          });
-        });
+      type: FileType.custom,
+      allowedExtensions: ["raucb"],
+    );
     if (result == null) {
       return;
     }
-    var request = ProgressMultipartRequest(
-      "POST",
-      Uri.parse("$_baseUri/firmware/upload"),
-      onProgress: (bytes, totalBytes) {
+    final formData = dio.FormData.fromMap({
+      'file': dio.MultipartFile.fromBytes(result.files.single.bytes!,
+          filename: result.files.single.name,
+          contentType: MediaType('application', 'octet-stream'))
+    });
+    await _dio.post(
+      "$_baseUri/firmware/upload",
+      data: formData,
+      onSendProgress: (sent, total) {
         setState(() {
-          _state = _UploadingState(currentBytes: bytes, totalBytes: totalBytes);
+          _state = _UploadingState(currentBytes: sent, totalBytes: total);
         });
       },
     );
-    request.files.add(MultipartFile.fromBytes(
-        'file', result.files.single.bytes!,
-        filename: result.files.single.name,
-        contentType: MediaType('application', 'octet-stream')));
-    await request.send();
     _state = _InstallingState(progress: 0, message: "Starting installation");
     await post(Uri.parse("$_baseUri/firmware/install"),
         headers: {"Content-Type": "application/json"},
