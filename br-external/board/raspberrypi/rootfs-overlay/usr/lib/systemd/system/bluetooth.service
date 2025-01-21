@@ -8,7 +8,6 @@ Type=dbus
 BusName=org.bluez
 ExecStartPre=+mkdir -p /data/bluetooth-state
 ExecStartPre=+chmod 0777 /data/bluetooth-state
-ExecStartPre=+mkdir -p /data/bluetooth-conf
 ExecStart=/usr/libexec/bluetooth/bluetoothd
 NotifyAccess=main
 #WatchdogSec=10
