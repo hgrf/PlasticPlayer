@@ -54,6 +54,7 @@ static char *g_status;
 static char *g_artists;
 static char *g_album;
 static char *g_title;
+static const char *g_player_avl;
 
 struct menu_item {
     const char *name;
@@ -64,21 +65,21 @@ static const char *no_description = "";
 
 static void menu_action_play_pause(void) {
     printf("Menu action: play/pause\n");
-    librespot_send_cmd("play_pause\n");
+    librespot_send_cmd("play_pause\n", false);
     /* hide menu */
     g_last_ts_all = 0;
 }
 
 static void menu_action_next(void) {
     printf("Menu action: next\n");
-    librespot_send_cmd("next\n");
+    librespot_send_cmd("next\n", false);
     /* hide menu */
     g_last_ts_all = 0;
 }
 
 static void menu_action_prev(void) {
     printf("Menu action: previous\n");
-    librespot_send_cmd("previous\n");
+    librespot_send_cmd("previous\n", false);
     /* hide menu */
     g_last_ts_all = 0;
 }
@@ -408,11 +409,18 @@ void ui_process(void) {
         print_scrolling(1, g_artists);
         print_scrolling(2, g_album);
         print_scrolling(3, g_title);
+        print_scrolling(5, g_player_avl);
         wrefresh(g_menu_win);
         pthread_mutex_unlock(&g_mutex);
 
         g_current_menu = CURRENT_MENU_NONE;
     }
+}
+
+void ui_update_player_availability(bool available) {
+    pthread_mutex_lock(&g_mutex);
+    g_player_avl = available ? "" : "Spotify not ready";
+    pthread_mutex_unlock(&g_mutex);
 }
 
 void ui_update_player_status(const char *status) {

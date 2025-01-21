@@ -150,7 +150,7 @@ static void load_uri(const std::string& uri) {
     std::string cmd = "load spotify:" + uri.substr(base_uri.length());
     std::replace(cmd.begin(), cmd.end(), '/', ':');
     std::cout << "cmd: " << cmd << std::endl;
-    librespot_send_cmd(cmd.c_str());
+    librespot_send_cmd(cmd.c_str(), false);
 }
 
 static void tag_reader_thread_entry(void) {
@@ -195,7 +195,7 @@ static void tag_reader_thread_entry(void) {
             if (g_tag_remove_counter >= 3) {
                 ui_led_off();
                 g_current_uri.clear();
-                librespot_send_cmd("pause");
+                librespot_send_cmd("pause", false);
             }
         }
     }

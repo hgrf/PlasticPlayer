@@ -3,7 +3,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <string.h>
@@ -65,6 +64,9 @@ static void* librespot_thread_entry(void *) {
     struct timeval tv;
     fd_set rfds;
     while (g_is_running) {
+        res = librespot_send_cmd("status\n", true);
+        ui_update_player_availability(res == 0);
+
         g_buffer[0] = '\0';
         FD_ZERO(&rfds);
         FD_SET(g_server_fd, &rfds);
@@ -132,9 +134,13 @@ int librespot_init(void) {
     return 0;
 }
 
-int librespot_send_cmd(const char *cmd) {
+int librespot_send_cmd(const char *cmd, bool with_response) {
     int status, valread, client_fd;
     struct sockaddr_in serv_addr;
+    struct timeval tv;
+    fd_set rfds;
+    uint8_t buffer[128];
+
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         printf("Socket creation error\n");
         return -1;
@@ -154,6 +160,34 @@ int librespot_send_cmd(const char *cmd) {
         return -1;
     }
     send(client_fd, cmd, strlen(cmd), 0);
+
+    if (with_response) {
+        FD_ZERO(&rfds);
+        FD_SET(client_fd, &rfds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 100000;
+        status = select(client_fd + 1, &rfds, NULL, NULL, &tv);
+        if (status == 0) {
+            printf("Response timed out\n");
+            close(client_fd);
+            return -1;
+        } else if (status < 0) {
+            perror("select");
+            close(client_fd);
+            return -1;
+        }
+        status = read(client_fd, buffer, sizeof(buffer));
+        if (status < 0) {
+            printf("Failed to receive response\n");
+            close(client_fd);
+            return -1;
+        }
+        if(status != 3 || strncmp((const char *) buffer, "ok\n", 3) != 0) {
+            printf("Response is not ok\n");
+            close(client_fd);
+            return -1;
+        }
+    }
 
     close(client_fd);
     return 0;
