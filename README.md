@@ -39,32 +39,30 @@ This is a remake of [Plastic Player 2](https://brendandawes.com/projects/plastic
 docker build -t buildroot docker
 docker run --rm -it -v ${PWD}:/workspace buildroot bash
 make -C buildroot/ BR2_EXTERNAL=../br-external O=../output raspberrypi4-64-rauc_defconfig
+cd br-external && ./openssl-ca.sh
 ```
 
-### Building the web app
+The last line generates an OpenSSL certificate and signing key for RAUC firmware updates.
+Note that you can only use the firmware update feature if the new firmware was signed with
+the same key as the old firmware.
 
-Install Flutter: https://docs.flutter.dev/get-started/install.
-
-```sh
-cd web_ui
-flutter build web
-rsync -avh --delete build/web/ ../br-external/board/raspberrypi/rootfs-overlay/usr/html
-```
+If you want to connect to the Plastic Player via SSH, put your public key in the `ssh-keys`
+directory.
 
 ### Building the image
 
 ```sh
 docker run --rm -it -v ${PWD}:/workspace buildroot bash
-make -C output/
+make -C output/ VERSION=<PUT VERSION HERE>
 ```
 
 ## Developing
 
 ### SSH config
 
-````
+```
 Host pp3
-    HostName 192.168.0.14
+    HostName 10.42.0.1
     User user
     IdentityFile ~/.ssh/id_ed25519
     StrictHostKeyChecking=no
@@ -82,5 +80,5 @@ rsync --rsync-path="sudo rsync" -avh --delete web_ui/build/web/ pp3:/usr/html
 ### Wiring
 
 ```sh
-docker run --rm -it -v ${PWD}:/workspace buildroot pipx run wireviz /workspace/hw/wiring.yml
+docker run --rm -it -v ${PWD}:/workspace buildroot /venv/bin/wireviz -f p wiring.yml
 ```
