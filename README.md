@@ -49,6 +49,19 @@ the same key as the old firmware.
 If you want to connect to the Plastic Player via SSH, put your public key in the `ssh-keys`
 directory.
 
+### Building on macOS
+
+On macOS, you might run into two problems:
+
+* `chmod: changing permissions of ...: Permission denied`: In Docker Desktop, go to Settings
+  -> General -> Choose file sharing implementation for your containers -> gRPC FUSE (instead
+  of VirtioFS)
+* `undefined reference to __lll_lock_wake_private` and possibly other build errors in glibc:
+  Put your build folder in a case-sensitive file system, see:
+  * https://brianboyko.medium.com/a-case-sensitive-src-folder-for-mac-programmers-176cc82a3830
+  * https://stackoverflow.com/questions/73417071/glibc-compilation-error-undefined-reference-to-lll-lock-wait-private
+  * https://github.com/riscv-collab/riscv-gnu-toolchain/issues/742#issuecomment-1061055030
+
 ### Building the image
 
 ```sh
