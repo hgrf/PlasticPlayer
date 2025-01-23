@@ -2,6 +2,15 @@
 
 This is a remake of [Plastic Player 2](https://brendandawes.com/projects/plasticplayer2) ([repo](https://github.com/brendandawes/PlasticPlayer)), an NFC based controller for Spotify. This isn't a step by step instructables style build guide but hopefully there's enough information here to build your own version. Knowledge of building stuff like this, soldering and understanding Linux, software compilation and the like would be good.
 
+## System overview
+
+![](doc/arch.png)
+
+*The TCP socket connection between pp3-core and librespot is a quick hack and should be replaced
+by a clean D-Bus interface. [Spotifyd](https://github.com/Spotifyd/spotifyd) provides a D-Bus
+media player interface and also uses `librespot` for playback, but it does not use an up-to-date
+version of `librespot`...
+
 ## Materials
 
 * **Raspberry Pi 4B** | [ CAD ](https://grabcad.com/library/raspberry-pi-4-model-b-1) | [ Amazon ](https://www.amazon.fr/dp/B07TGBLK33/)
