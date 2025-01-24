@@ -1,0 +1,28 @@
+diff --git a/arch/arm/mach-bcm283x/reset.c b/arch/arm/mach-bcm283x/reset.c
+index f13ac0c637..f6b0ac53cb 100644
+--- a/arch/arm/mach-bcm283x/reset.c
++++ b/arch/arm/mach-bcm283x/reset.c
+@@ -56,6 +56,23 @@ void reset_cpu(void)
+ 	__reset_cpu(regs, 0);
+ }
+ 
++int do_poweroff(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
++{
++	u32 val;
++	struct bcm2835_wdog_regs *regs =
++		(struct bcm2835_wdog_regs *)BCM2835_WDOG_PHYSADDR;
++
++	val = readl(&regs->rsts);
++	val |= BCM2835_WDOG_PASSWORD;
++	val |= BCM2835_WDOG_RSTS_RASPBERRYPI_HALT;
++	writel(val, &regs->rsts);
++	__reset_cpu(regs, 10);
++
++	while (1) { }
++
++	return 0;
++}
++
+ #ifdef CONFIG_EFI_LOADER
+ 
+ void __efi_runtime EFIAPI efi_reset_system(

@@ -7,10 +7,10 @@
 	status = "okay";
 };
 
-&i2c1 {
+&i2c6 {
     status = "okay";
     pinctrl-names = "default";
-    pinctrl-0 = <&i2c1_pins>;
+    pinctrl-0 = <&i2c6_pins>;
 
 	#address-cells = <1>;
 	#size-cells = <0>;

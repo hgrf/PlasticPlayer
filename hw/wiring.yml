@@ -2,8 +2,8 @@ connectors:
   raspi:
     subtype: male
     pincount: 40
-    pins:      [  1,      3,      5,   6,      7,   9,      11,      13,  14,      16,  17,      19,  20,     21,      23,     24,      37,  39]
-    pinlabels: [3V3, GPIO_2, GPIO_3, GND, GPIO_4, GND, GPIO_17, GPIO_27, GND, GPIO_23, 3V3, GPIO_10, GND, GPIO_9, GPIO_11, GPIO_8, GPIO_26, GND]
+    pins:      [  1,      5,   6,      7,   9,      11,      13,  14,      15,      16,  17,      19,  20,     21,      23,     24,      37,  39]
+    pinlabels: [3V3, GPIO_3, GND, GPIO_4, GND, GPIO_17, GPIO_27, GND, GPIO_22, GPIO_23, 3V3, GPIO_10, GND, GPIO_9, GPIO_11, GPIO_8, GPIO_26, GND]
   btn_left:
     subtype: male
     pinlabels: [PLUS, MINUS]
@@ -58,12 +58,12 @@ connections:
     - btn_left: [1, 2]
 
   -
-    - raspi: [16, 14]
+    - raspi: [5, 14]
     - W2: [1, 2]
     - btn_right: [1, 2]
 
   -
-    - raspi: [6, 1, 3, 5]
+    - raspi: [6, 1, 15, 16]
     - W3: [1-4]
     - display: [1-4]
 
