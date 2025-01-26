@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -119,11 +120,19 @@ static void menu_action_bt(void) {
     g_current_menu = CURRENT_MENU_BT;
 }
 
+static void menu_action_power_off(void) {
+    printf("Menu action: power off\n");
+    if (system("sudo halt") < 0) {
+        perror("failed to halt system");
+    }
+}
+
 static const struct menu_item choices[] = {
     { "Play/Pause", menu_action_play_pause },
     { "Next", menu_action_next },
     { "Previous", menu_action_prev },
     { "Bluetooth", menu_action_bt },
+    { "Power off", menu_action_power_off },
 };
 
 static int btn_led_init(void) {
@@ -201,11 +210,12 @@ static int menu_init(void) {
     noecho();
 
 	/* Create items */
-    g_menu_items = (ITEM **)calloc(ARRAY_SIZE(choices), sizeof(ITEM *));
+    g_menu_items = (ITEM **)calloc(ARRAY_SIZE(choices) + 1, sizeof(ITEM *));
     for(i = 0; i < ARRAY_SIZE(choices); i++) {
         g_menu_items[i] = new_item(choices[i].name, no_description);
         set_item_userptr(g_menu_items[i], (void *) choices[i].callback);
     }
+    g_menu_items[i] = NULL;
 
 	/* Crate menu */
 	g_menu = new_menu((ITEM **)g_menu_items);
