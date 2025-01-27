@@ -149,10 +149,14 @@ class _FirmwarePageState extends State<FirmwarePage> {
   }
 
   Widget _raucSlotToSubtitle(dynamic slot) {
-    final installed = DateTime.parse(slot["installed.timestamp"]).toLocal();
-    final installedStr = DateFormat('yyyy-MM-dd HH:mm:ss').format(installed);
+    var installedStr = "";
+    if (slot["installed.timestamp"] != null) {
+      final installed = DateTime.parse(slot["installed.timestamp"]).toLocal();
+      installedStr =
+          "Installed: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(installed)}  ";
+    }
     return Text(
-        "Version: ${slot["bundle.version"]}  Installed: $installedStr  ${(slot["boot-status"] != null) ? "Boot status: ${slot["boot-status"]}" : ""}");
+        "Version: ${slot["bundle.version"]}  $installedStr${(slot["boot-status"] != null) ? "Boot status: ${slot["boot-status"]}" : ""}");
   }
 
   @override
