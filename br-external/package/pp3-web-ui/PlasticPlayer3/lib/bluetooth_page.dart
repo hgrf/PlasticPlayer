@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 
 class BluetoothPage extends StatefulWidget {
   const BluetoothPage({super.key});
@@ -27,44 +26,45 @@ class BluetoothDevice {
 }
 
 class _BluetoothPageState extends State<BluetoothPage> {
-  static const _baseUri = 'http://10.42.0.1:9000';
+  static const _baseUri = 'http://10.42.0.1:9000/';
   bool _isScanning = false;
   late Timer _refreshTimer;
   List<BluetoothDevice> _devices = [];
+  final dio = Dio();
 
   Future<void> _refreshState() async {
-    final resp = await get(Uri.parse("$_baseUri/bluetooth/is_scanning"));
-    final devices = await get(Uri.parse("$_baseUri/bluetooth/devices"));
+    final resp = await dio.get("bluetooth/is_scanning");
+    final devices = await dio.get("bluetooth/devices");
     setState(() {
-      _isScanning = resp.body == '1';
-      _devices = (jsonDecode(devices.body) as List<dynamic>)
+      _isScanning = resp.data == 1;
+      _devices = (devices.data as List<dynamic>)
           .map((d) => BluetoothDevice.fromJson(d))
           .toList();
     });
   }
 
   Future<void> _scan() async {
-    await post(Uri.parse("$_baseUri/bluetooth/scan"));
+    await dio.post("bluetooth/scan");
   }
 
   Future<void> _stopScan() async {
-    await post(Uri.parse("$_baseUri/bluetooth/stop_scan"));
+    await dio.post("bluetooth/stop_scan");
   }
 
   Future<void> _connect(BluetoothDevice device) async {
-    await post(Uri.parse("$_baseUri/bluetooth/connect/${device.address}"));
+    await dio.post("bluetooth/connect/${device.address}");
   }
 
   Future<void> _disconnect(BluetoothDevice device) async {
-    await post(Uri.parse("$_baseUri/bluetooth/disconnect/${device.address}"));
+    await dio.post("bluetooth/disconnect/${device.address}");
   }
 
   Future<void> _pair(BluetoothDevice device) async {
-    await post(Uri.parse("$_baseUri/bluetooth/pair/${device.address}"));
+    await dio.post("bluetooth/pair/${device.address}");
   }
 
   Future<void> _unpair(BluetoothDevice device) async {
-    await post(Uri.parse("$_baseUri/bluetooth/unpair/${device.address}"));
+    await dio.post("bluetooth/unpair/${device.address}");
   }
 
   void _timerCallback(Timer timer) {
@@ -74,6 +74,25 @@ class _BluetoothPageState extends State<BluetoothPage> {
   @override
   void initState() {
     super.initState();
+
+    dio.options.baseUrl = _baseUri;
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (response, handler) {
+          if (response.statusCode != 200) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text("Error: $response")));
+          } else {
+            return handler.next(response);
+          }
+        },
+        onError: (DioException error, ErrorInterceptorHandler handler) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Error: $error")));
+        },
+      ),
+    );
+
     _refreshTimer = Timer.periodic(const Duration(seconds: 1), _timerCallback);
     _refreshState();
   }
