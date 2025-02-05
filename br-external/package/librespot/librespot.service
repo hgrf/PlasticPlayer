@@ -2,8 +2,6 @@
 Description=A Spotify connect daemon
 Wants=sound.target
 After=sound.target
-Wants=network-online.target
-After=network-online.target
 
 [Service]
 User=user
