@@ -17,6 +17,7 @@ static int g_server_fd;
 static pthread_t g_thread_id;
 static volatile bool g_is_running = true;
 static char g_buffer[1024] = {0};
+static librespot_status_t g_status = LIBRESPOT_STATUS_UNAVAILABLE;
 
 static void librespot_parse_event(char *data) {
     size_t len = strlen(data);
@@ -50,9 +51,9 @@ static void librespot_parse_event(char *data) {
     if (event != NULL && strcmp(event, "track_changed") == 0) {
         ui_update_track_info(artists, album, title);
     } else if (event != NULL && strcmp(event, "paused") == 0) {
-        ui_update_player_status("Paused");
+        g_status = LIBRESPOT_STATUS_PAUSED;
     } else if (event != NULL && strcmp(event, "playing") == 0) {
-        ui_update_player_status("Playing");
+        g_status = LIBRESPOT_STATUS_PLAYING;
     }
 }
 
@@ -65,7 +66,9 @@ static void* librespot_thread_entry(void *) {
     fd_set rfds;
     while (g_is_running) {
         res = librespot_send_cmd("status\n", true);
-        ui_update_player_availability(res == 0);
+        if (res != 0) {
+            g_status = LIBRESPOT_STATUS_UNAVAILABLE;
+        }
 
         g_buffer[0] = '\0';
         FD_ZERO(&rfds);
@@ -191,6 +194,10 @@ int librespot_send_cmd(const char *cmd, bool with_response) {
 
     close(client_fd);
     return 0;
+}
+
+librespot_status_t librespot_get_status(void) {
+    return g_status;
 }
 
 void librespot_deinit(void) {

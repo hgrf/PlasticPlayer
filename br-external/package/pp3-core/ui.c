@@ -10,6 +10,7 @@
 #include <menu.h>
 
 #include "bt.h"
+#include "icons.h"
 #include "librespot.h"
 #include "wifistatus.h"
 
@@ -51,11 +52,9 @@ static bt_device_t *g_bt_devices;
 static ITEM **g_menu_bt_items;
 
 pthread_mutex_t g_mutex;
-static char *g_status;
 static char *g_artists;
 static char *g_album;
 static char *g_title;
-static const char *g_player_avl;
 
 struct menu_item {
     const char *name;
@@ -63,6 +62,30 @@ struct menu_item {
 };
 
 static const char *no_description = "";
+
+static unsigned wifi_status_to_icon(wifi_status_t status) {
+    switch(status) {
+        case WIFI_STATUS_CONNECTED:
+            return ICON_WIFI_CONNECTED;
+        case WIFI_STATUS_CONNECTING:
+            return ICON_WIFI_CONNECTING;
+        case WIFI_STATUS_DISCONNECTED:
+        default:
+            return ICON_WIFI_DISCONNECTED;
+    }
+}
+
+static unsigned librespot_status_to_icon(librespot_status_t status) {
+    switch(status) {
+        case LIBRESPOT_STATUS_PLAYING:
+            return ICON_PLAY;
+        case LIBRESPOT_STATUS_PAUSED:
+            return ICON_PAUSE;
+        case LIBRESPOT_STATUS_UNAVAILABLE:
+        default:
+            return ICON_WARNING;
+    }
+}
 
 static void menu_action_play_pause(void) {
     printf("Menu action: play/pause\n");
@@ -253,7 +276,13 @@ int ui_init(void) {
     if (btn_led_init() < 0)
         return -1;
 
+    if (icons_init() < 0) {
+        btn_led_deinit();
+        return -1;
+    }
+
     if (menu_init() < 0) {
+        icons_deinit();
         btn_led_deinit();
         return -1;
     }
@@ -304,7 +333,7 @@ void ui_process(void) {
     bt_device_t *bt_device;
     struct timespec timeout = { 0, 200000 };
     wifi_status_t wifi_status;
-    const char* wifi_status_str;
+    librespot_status_t librespot_status;
 
     res = gpiod_line_event_wait_bulk(&gs_lines, &timeout, &gs_evt_lines);
     if (res == 1)
@@ -376,6 +405,7 @@ void ui_process(void) {
                     g_last_ts_all = 0;
                 }
             } else {
+                icons_clear();
                 werase(g_menu_win);
 
                 /* Print a border around the main window */
@@ -397,51 +427,21 @@ void ui_process(void) {
             menu_bt_deinit();
         }
         werase(g_menu_win);
+
+        librespot_status = librespot_get_status();
+        icons_put(0, 0, librespot_status_to_icon(librespot_status));
         wifi_status = get_wifi_status();
-        switch(wifi_status) {
-            case WIFI_STATUS_CONNECTED:
-                wifi_status_str = "WiFi connected";
-                break;
-            case WIFI_STATUS_CONNECTING:
-                wifi_status_str = "WiFi connecting";
-                break;
-            case WIFI_STATUS_DISCONNECTED:
-                wifi_status_str = "WiFi disconnected";
-                break;
-            default:
-                wifi_status_str = "WiFi error";
-                break;
-        }
-        print_scrolling(4, wifi_status_str);
+        icons_put(100, 0, wifi_status_to_icon(wifi_status));
 
         pthread_mutex_lock(&g_mutex);
-        print_scrolling(0, g_status);
-        print_scrolling(1, g_artists);
-        print_scrolling(2, g_album);
-        print_scrolling(3, g_title);
-        print_scrolling(5, g_player_avl);
+        print_scrolling(4, g_artists);
+        print_scrolling(5, g_album);
+        print_scrolling(6, g_title);
         wrefresh(g_menu_win);
         pthread_mutex_unlock(&g_mutex);
 
         g_current_menu = CURRENT_MENU_NONE;
     }
-}
-
-void ui_update_player_availability(bool available) {
-    pthread_mutex_lock(&g_mutex);
-    g_player_avl = available ? "" : "Spotify not ready";
-    pthread_mutex_unlock(&g_mutex);
-}
-
-void ui_update_player_status(const char *status) {
-    pthread_mutex_lock(&g_mutex);
-    if (g_status != NULL) {
-        free(g_status);
-        g_status = NULL;
-    }
-    if (status != NULL)
-        g_status = strdup(status);
-    pthread_mutex_unlock(&g_mutex);
 }
 
 void ui_update_track_info(const char *artists, const char *album, const char *title) {
@@ -480,14 +480,11 @@ void ui_led_off(void) {
 }
 
 void ui_deinit(void) {
-    menu_deinit();    
+    icons_deinit();
+    menu_deinit();
     btn_led_deinit();
     pthread_mutex_destroy(&g_mutex);
 
-    if (g_status != NULL) {
-        free(g_status);
-        g_status = NULL;
-    }
     if (g_artists != NULL) {
         free(g_artists);
         g_artists = NULL;
