@@ -4,6 +4,7 @@
 #include <thread>
 
 #include <driver_ntag21x_basic.h>
+#include <driver_mfrc522_basic.h>
 #include <ndef-lite/message.hpp>
 
 #include "librespot.h"
@@ -24,6 +25,7 @@ typedef enum {
 } tlv_tag_field_t;
 
 static bool g_is_running = true;
+static mfrc522_handle_t *g_mfrc522_handle;
 
 /**
  * @brief      read page and print data
@@ -234,6 +236,20 @@ int main(int argc, char *argv[]) {
 
     res = ntag21x_basic_init();
     if (res != 0) {
+        return 1;
+    }
+
+    g_mfrc522_handle = mfrc522_basic_get_handle();
+
+    // default minimum reception level is 8 vs. collision level 4
+    res = mfrc522_set_min_level(g_mfrc522_handle, 3);
+    if (res != 0) {
+        (void)ntag21x_basic_deinit();
+        return 1;
+    }
+    res = mfrc522_set_collision_level(g_mfrc522_handle, 1);
+    if (res != 0) {
+        (void)ntag21x_basic_deinit();
         return 1;
     }
 
