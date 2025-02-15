@@ -11,8 +11,17 @@
 #include "wifistatus.h"
 
 #define NDEF_START_PAGE 4
-#define NDEF_START_OFFSET 2
 #define PAGE_SIZE 4
+
+// c.f. https://blog.eletrogate.com/wp-content/uploads/2018/05/NFCForum-TS-Type-2-Tag_1.1.pdf
+typedef enum {
+    TLV_TAG_FIELD_NULL,
+    TLV_TAG_FIELD_LOCK_CTRL,
+    TLV_TAG_FIELD_MEM_CTRL,
+    TLV_TAG_FIELD_NDEF,
+    TLV_TAG_FIELD_PROPRIETARY = 0xfd,
+    TLV_TAG_FIELD_TERMINATOR,
+} tlv_tag_field_t;
 
 static bool g_is_running = true;
 
@@ -83,6 +92,7 @@ static NDEFMessage search_and_read_tag() {
     uint8_t id[8];
     uint8_t data[496];
     uint8_t len;
+    uint8_t page;
     uint8_t page_count;
     ntag21x_capability_container_t type_s;
 
@@ -105,21 +115,37 @@ static NDEFMessage search_and_read_tag() {
         ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
         return NDEFMessage();
     }
-    if (data[0] != 0x03) {
+
+    page = NDEF_START_PAGE;
+    i = 0;
+    if (data[i] == TLV_TAG_FIELD_LOCK_CTRL) {
+        // the value of this TLV consists of 3 bytes, so the next TLV starts on page 5 byte 1
+        page++;
+        i = 1;
+        res = read_page(page, data);
+        if (res != 0) {
+            ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
+            return NDEFMessage();
+        }
+    }
+
+    if (data[i] != TLV_TAG_FIELD_NDEF) {
         ntag21x_interface_debug_print("ntag21x: invalid NDEF message start byte: 0x%02X\n", data[0]);
         return NDEFMessage();
     }
 
-    len = data[1];
+    i++;
+    len = data[i];
     page_count = len / PAGE_SIZE + (len % PAGE_SIZE ? 1 : 0);
-    res = read_pages(NDEF_START_PAGE + 1, page_count - 1, data + PAGE_SIZE);
+    page++;
+    res = read_pages(page, page_count - 1, data + PAGE_SIZE);
     if (res != 0) {
         ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
         return NDEFMessage();
     }
 
     try {
-        auto msg = NDEFMessage::from_bytes(std::vector<uint8_t>(data + NDEF_START_OFFSET, data + NDEF_START_OFFSET + len), 0);
+        auto msg = NDEFMessage::from_bytes(std::vector<uint8_t>(data + i + 1, data + i + 1 + len), 0);
         return msg;
     } catch (const std::exception& e) {
         ntag21x_interface_debug_print("ntag21x: failed to parse NDEF message: %s\n", e.what());
