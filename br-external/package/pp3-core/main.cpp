@@ -96,11 +96,23 @@ static NDEFMessage search_and_read_tag() {
     uint8_t len;
     uint8_t page;
     uint8_t page_count;
+    uint8_t reader_id;
+    uint8_t version;
     ntag21x_capability_container_t type_s;
 
     res = ntag21x_basic_search(&type_s, id, 1);
     if (res != 0) {
         ntag21x_interface_debug_print("ntag21x: search failed: %d\n", res);
+        if (mfrc522_get_version(g_mfrc522_handle, &reader_id, &version) != 0) {
+            ntag21x_interface_debug_print("ntag21x: failed to get version\n");
+        } else if (reader_id != 0x09) {
+            ntag21x_interface_debug_print("ntag21x: invalid reader ID: 0x%02X\n", reader_id);
+        }
+        if (mfrc522_get_error(g_mfrc522_handle, &res) != 0) {
+            ntag21x_interface_debug_print("ntag21x: failed to get error register\n");
+        } else {
+            ntag21x_interface_debug_print("ntag21x: error register: 0x%02X\n", res);
+        }
         return NDEFMessage();
     }
 
