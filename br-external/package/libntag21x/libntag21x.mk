@@ -27,6 +27,9 @@ define LIBNTAG21X_INSTALL_STAGING_CMDS
     $(INSTALL) -D -m 0644 $(@D)/src/driver_ntag21x.h $(STAGING_DIR)/usr/include/driver_ntag21x.h
     $(INSTALL) -D -m 0644 $(@D)/example/driver_ntag21x_basic.h $(STAGING_DIR)/usr/include/driver_ntag21x_basic.h
 	$(INSTALL) -D -m 0644 $(@D)/interface/driver_ntag21x_interface.h $(STAGING_DIR)/usr/include/driver_ntag21x_interface.h
+    $(INSTALL) -D -m 0644 $(@D)/reader/mfrc522/src/driver_mfrc522.h $(STAGING_DIR)/usr/include/driver_mfrc522.h
+    $(INSTALL) -D -m 0644 $(@D)/reader/mfrc522/example/driver_mfrc522_basic.h $(STAGING_DIR)/usr/include/driver_mfrc522_basic.h
+    $(INSTALL) -D -m 0644 $(@D)/reader/mfrc522/interface/driver_mfrc522_interface.h $(STAGING_DIR)/usr/include/driver_mfrc522_interface.h
     $(INSTALL) -D -m 0755 $(@D)/project/raspberrypi4b/libntag21x.so* $(STAGING_DIR)/usr/lib
 endef
 
