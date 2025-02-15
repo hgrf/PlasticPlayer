@@ -91,10 +91,6 @@ static NDEFMessage search_and_read_tag() {
         ntag21x_interface_debug_print("ntag21x: search failed: %d\n", res);
         return NDEFMessage();
     }
-    if (type_s != NTAG21X_CAPABILITY_CONTAINER_496_BYTE_NTAG215) {
-        ntag21x_interface_debug_print("ntag21x: unsupported card.\n");
-        return NDEFMessage();
-    }
 
     ntag21x_interface_debug_print("ntag21x: id is ");
     for (i = 0; i < 8; i++) {
