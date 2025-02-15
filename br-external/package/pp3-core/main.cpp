@@ -138,7 +138,7 @@ static NDEFMessage search_and_read_tag() {
 
     i++;
     len = data[i];
-    page_count = len / PAGE_SIZE + (len % PAGE_SIZE ? 1 : 0);
+    page_count = (len + i + 1) / PAGE_SIZE + ((len + i + 1) % PAGE_SIZE ? 1 : 0);
     page++;
     res = read_pages(page, page_count - 1, data + PAGE_SIZE);
     if (res != 0) {
