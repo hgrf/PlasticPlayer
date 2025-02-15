@@ -1,0 +1,29 @@
+diff --git a/reader/mfrc522/example/driver_mfrc522_basic.c b/reader/mfrc522/example/driver_mfrc522_basic.c
+index 8b1b91d..8d0bb8c 100644
+--- a/reader/mfrc522/example/driver_mfrc522_basic.c
++++ b/reader/mfrc522/example/driver_mfrc522_basic.c
+@@ -38,6 +38,11 @@
+ 
+ static mfrc522_handle_t gs_handle;        /**< mfrc522 handle */
+ 
++mfrc522_handle_t *mfrc522_basic_get_handle(void)
++{
++    return &gs_handle;
++}
++
+ /**
+  * @brief  interrupt irq
+  * @return status code
+diff --git a/reader/mfrc522/example/driver_mfrc522_basic.h b/reader/mfrc522/example/driver_mfrc522_basic.h
+index efc6020..a9ade72 100644
+--- a/reader/mfrc522/example/driver_mfrc522_basic.h
++++ b/reader/mfrc522/example/driver_mfrc522_basic.h
+@@ -109,6 +109,8 @@ extern "C"{
+ #define MFRC522_BASIC_DEFAULT_TIMER_PRESCALER              0xD3E                                                     /**< 0xD3E */
+ #define MFRC522_BASIC_DEFAULT_TIMER_RELOAD                 0x001E                                                    /**< 0x001E */
+ 
++mfrc522_handle_t *mfrc522_basic_get_handle(void);
++
+ /**
+  * @brief  interrupt irq
+  * @return status code
