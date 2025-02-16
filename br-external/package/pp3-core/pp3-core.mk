@@ -11,7 +11,7 @@ PP3_CORE_DEPENDENCIES = freetype libntag21x libndef ncurses
 
 define PP3_CORE_BUILD_CMDS
     $(TARGET_CXX) -L$(TARGET_DIR)/usr/lib -I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/usr/include/freetype2 -I$(STAGING_DIR)/usr/include/glib-2.0 -I$(STAGING_DIR)/usr/lib/glib-2.0/include -o $(@D)/pp3-core \
-		$(@D)/main.cpp $(@D)/librespot.c $(@D)/ui.c $(@D)/icons.c $(@D)/bt.c $(@D)/wifistatus.c \
+		$(@D)/main.cpp $(@D)/librespot.c $(@D)/tagreader.cpp $(@D)/ui.c $(@D)/icons.c $(@D)/bt.c $(@D)/wifistatus.c \
 		-l:libntag21x.so.1.0.0 -lndef -lgpiod -lmenu -lncurses -lfreetype -lgio-2.0 -lglib-2.0 -lgobject-2.0
 endef
 
