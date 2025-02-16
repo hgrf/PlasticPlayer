@@ -26,6 +26,8 @@ typedef enum {
 
 static bool g_is_running = true;
 static mfrc522_handle_t *g_mfrc522_handle;
+static char stdout_buffer[1024];
+static char stderr_buffer[1024];
 
 /**
  * @brief      read page and print data
@@ -203,7 +205,6 @@ static void tag_reader_thread_entry(void) {
             printf("\n");
             if (memcmp(prev_serial, serial, sizeof(prev_serial)) == 0) {
                 printf("Tag has not changed.\n");
-                fflush(stdout);
                 usleep(200000);
                 continue;
             }
@@ -267,6 +268,9 @@ int main(int argc, char *argv[]) {
     uint8_t res;
 
     signal(SIGINT, signal_handler);
+
+    setvbuf(stdout, stdout_buffer, _IOLBF, sizeof(stdout_buffer));
+    setvbuf(stderr, stderr_buffer, _IOLBF, sizeof(stderr_buffer));
 
     res = ntag21x_basic_init();
     if (res != 0) {
