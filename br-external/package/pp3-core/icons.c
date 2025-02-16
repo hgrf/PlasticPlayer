@@ -54,7 +54,7 @@ static void draw_bitmap(FT_Bitmap* bitmap, FT_Int x, FT_Int y, FT_Int offset_x, 
 }
 
 int icons_init(void) {
-    fb_var_screeninfo screen_info;
+    struct fb_var_screeninfo screen_info;
     FT_Error error;
 
     g_fb_fd = open(FB_DEV, O_RDWR);

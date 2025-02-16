@@ -1,7 +1,7 @@
 #include "tagreader.h"
 
-#include <iostream>
 #include <pthread.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 #include <driver_ntag21x_basic.h>

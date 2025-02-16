@@ -9,10 +9,12 @@ PP3_CORE_SITE_METHOD = local
 
 PP3_CORE_DEPENDENCIES = freetype libntag21x libndef ncurses
 
+PP3_CORE_MAKE_OPTS = \
+    CC="$(TARGET_CC)" \
+    CXX="$(TARGET_CXX)"
+
 define PP3_CORE_BUILD_CMDS
-    $(TARGET_CXX) -L$(TARGET_DIR)/usr/lib -I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/usr/include/freetype2 -I$(STAGING_DIR)/usr/include/glib-2.0 -I$(STAGING_DIR)/usr/lib/glib-2.0/include -o $(@D)/pp3-core \
-		$(@D)/main.cpp $(@D)/librespot.c $(@D)/tagreader.cpp $(@D)/ui.c $(@D)/icons.c $(@D)/bt.c $(@D)/wifistatus.c \
-		-l:libntag21x.so.1.0.0 -lndef -lgpiod -lmenu -lncurses -lfreetype -lgio-2.0 -lglib-2.0 -lgobject-2.0
+    $(MAKE) -C $(@D) $(PP3_CORE_MAKE_OPTS) pp3-core
 endef
 
 define PP3_CORE_INSTALL_TARGET_CMDS

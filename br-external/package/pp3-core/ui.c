@@ -201,7 +201,7 @@ static void btn_led_deinit(void) {
     gpiod_chip_close(gs_chip);
 }
 
-static int menu_init(void) {
+static int ui_menu_init(void) {
     int i;
 
     g_fd = open("/dev/tty1", O_RDWR);
@@ -281,7 +281,7 @@ int ui_init(void) {
         return -1;
     }
 
-    if (menu_init() < 0) {
+    if (ui_menu_init() < 0) {
         icons_deinit();
         btn_led_deinit();
         return -1;

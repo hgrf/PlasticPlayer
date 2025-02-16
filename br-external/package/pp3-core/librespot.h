@@ -3,6 +3,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 typedef enum {
     LIBRESPOT_STATUS_UNAVAILABLE = 0,
     LIBRESPOT_STATUS_PAUSED,
@@ -13,5 +17,9 @@ int librespot_init(void);
 int librespot_send_cmd(const char *cmd, bool with_response);
 librespot_status_t librespot_get_status(void);
 void librespot_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LIBRESPOT_H

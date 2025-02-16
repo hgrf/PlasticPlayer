@@ -1,6 +1,12 @@
 #ifndef BT_H
 #define BT_H
 
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 typedef struct {
     char *id;   //< library-internal identifier (in this case DBus object path)
     char *name; //< user-friendly name
@@ -35,5 +41,9 @@ int bt_device_connect(const char *id);
  * @return     bool
  */
 bool bt_is_connected(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // BT_H
