@@ -1,16 +1,11 @@
 #include "tagreader.h"
 
-#include <algorithm>
 #include <iostream>
 #include <pthread.h>
 #include <unistd.h>
 
 #include <driver_ntag21x_basic.h>
 #include <driver_mfrc522_basic.h>
-#include <ndef-lite/message.hpp>
-
-#include "librespot.h"
-#include "ui.h"
 
 #define NDEF_START_PAGE 4
 #define PAGE_SIZE 4
@@ -28,8 +23,9 @@ typedef enum {
 static pthread_t g_thread;
 static bool g_is_running = true;
 static mfrc522_handle_t *g_mfrc522_handle;
-static unsigned int g_tag_remove_counter;
-static std::string g_current_uri;
+void (*g_ndef_msg_cb)(uint8_t *msg, unsigned int len);
+void (*g_tag_removed_cb)(void);
+static int g_tag_remove_counter;
 
 /**
  * @brief      read page and print data
@@ -90,9 +86,11 @@ static std::string g_current_uri;
 
 /**
  * @brief      search and read tag
- * @return     NDEF message
+ * @return     status code
+ *             - 0 success
+ *             - 1 failure
  */
- static NDEFMessage search_and_read_tag(uint8_t serial[7]) {
+ static int search_and_read_tag(uint8_t serial[7]) {
     uint8_t res;
     uint8_t i;
     uint8_t id[8];
@@ -117,7 +115,7 @@ static std::string g_current_uri;
         } else {
             ntag21x_interface_debug_print("ntag21x: error register: 0x%02X\n", res);
         }
-        return NDEFMessage();
+        return 1;
     }
 
     ntag21x_interface_debug_print("ntag21x: serial number is ");
@@ -133,7 +131,7 @@ static std::string g_current_uri;
     res = read_page(NDEF_START_PAGE, data);
     if (res != 0) {
         ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
-        return NDEFMessage();
+        return 1;
     }
 
     page = NDEF_START_PAGE;
@@ -145,13 +143,13 @@ static std::string g_current_uri;
         res = read_page(page, data);
         if (res != 0) {
             ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
-            return NDEFMessage();
+            return 1;
         }
     }
 
     if (data[i] != TLV_TAG_FIELD_NDEF) {
         ntag21x_interface_debug_print("ntag21x: invalid NDEF message start byte: 0x%02X\n", data[0]);
-        return NDEFMessage();
+        return 1;
     }
 
     i++;
@@ -161,38 +159,19 @@ static std::string g_current_uri;
     res = read_pages(page, page_count - 1, data + PAGE_SIZE);
     if (res != 0) {
         ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
-        return NDEFMessage();
+        return 1;
     }
 
-    try {
-        auto msg = NDEFMessage::from_bytes(std::vector<uint8_t>(data + i + 1, data + i + 1 + len), 0);
-        return msg;
-    } catch (const std::exception& e) {
-        ntag21x_interface_debug_print("ntag21x: failed to parse NDEF message: %s\n", e.what());
-        return NDEFMessage();
-    }
-}
-
-static void load_uri(const std::string& uri) {
-    const std::string base_uri = "https://open.spotify.com/";
-    if (uri.substr(0, base_uri.length()) != base_uri) {
-        std::cout << "URI does not start with " << base_uri << std::endl;
-        return;
+    g_tag_remove_counter = 0;
+    if (g_ndef_msg_cb != NULL) {
+        g_ndef_msg_cb(data + i + 1, len);
     }
 
-    if (uri == g_current_uri) {
-        return;
-    }
-    g_current_uri = uri;
-
-    ui_led_on();
-    std::string cmd = "load spotify:" + uri.substr(base_uri.length());
-    std::replace(cmd.begin(), cmd.end(), '/', ':');
-    std::cout << "cmd: " << cmd << std::endl;
-    librespot_send_cmd(cmd.c_str(), false);
+    return 0;
 }
 
 static void *tag_reader_thread_entry(void *) {
+    int res;
     uint8_t prev_serial[7] = {0};
     uint8_t serial[7];
     while(g_is_running) {
@@ -213,47 +192,12 @@ static void *tag_reader_thread_entry(void *) {
             memset(prev_serial, 0, sizeof(prev_serial));
         }
 
-        NDEFMessage msg = search_and_read_tag(prev_serial);
-        if (msg.is_valid()) {
-            std::cout << "NDEF message is valid and has " << msg.record_count() << " records" << std::endl;
-            g_tag_remove_counter = 0;
-            if (msg.record_count() > 0) {
-                // c.f. https://github.com/hgrf/NDEF/commit/4c3133f6830fbe595c937db7a17c7a65eb487a82
-                // c.f. https://github.com/hgrf/NDEF/commit/e035efd38d2deb2f6b94301faa5937c59c1dba61
-                // c.f. https://www.oreilly.com/library/view/beginning-nfc/9781449324094/ch04.html
-                // c.f. https://www.oreilly.com/library/view/beginning-nfc/9781449324094/apa.html
-                // c.f. https://berlin.ccc.de/~starbug/felica/NFCForum-SmartPoster_RTD_1.0.pdf
-                const auto &rec = msg.record(0);
-                if (rec.type().name() == "U") {
-                    auto uri = msg.record(0).get_uri_protocol() + msg.record(0).get_uri();
-                    std::cout << "Record 1 URI: " << uri << std::endl;
-                    load_uri(uri);
-                } else if (rec.type().name() == "Sp") {
-                    auto sp_msg = NDEFMessage::from_bytes(rec.payload(), 0);
-                    if (sp_msg.is_valid()) {
-                        std::cout << "Record 1 Smart Poster is valid and has " << sp_msg.record_count() << " records" << std::endl;
-                        if (sp_msg.record_count() > 0) {
-                            const auto &sp_rec = sp_msg.record(0);
-                            if (sp_rec.type().name() == "U") {
-                                auto uri = sp_msg.record(0).get_uri_protocol() + sp_msg.record(0).get_uri();
-                                std::cout << "Record 1 Smart Poster URI: " << uri << std::endl;
-                                load_uri(uri);
-                            } else {
-                                std::cout << "Record 1 Smart Poster type: " << sp_rec.type().name() << std::endl;
-                            }
-                        }
-                    }
-                } else {
-                    std::cout << "Record 1 type: " << rec.type().name() << std::endl;
-                }
-            }
-        } else {
-            std::cout << "NDEF message is invalid" << std::endl;
-            g_tag_remove_counter++;
-            if (g_tag_remove_counter >= 3) {
-                ui_led_off();
-                g_current_uri.clear();
-                librespot_send_cmd("pause", false);
+        res = search_and_read_tag(prev_serial);
+        if (res != 0) {
+            if (g_tag_remove_counter == 3 && g_tag_removed_cb) {
+                g_tag_removed_cb();
+            } else if (g_tag_remove_counter < 3) {
+                g_tag_remove_counter++;
             }
         }
     }
@@ -261,8 +205,11 @@ static void *tag_reader_thread_entry(void *) {
     return NULL;
 }
 
-int tag_reader_init(void) {
+int tag_reader_init(void (*ndef_msg_cb)(uint8_t *msg, unsigned int len), void (*tag_removed_cb)(void)) {
     int res;
+
+    g_ndef_msg_cb = ndef_msg_cb;
+    g_tag_removed_cb = tag_removed_cb;
 
     res = ntag21x_basic_init();
     if (res != 0) {
