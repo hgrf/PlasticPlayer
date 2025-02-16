@@ -430,6 +430,7 @@ void ui_process(void) {
 
         librespot_status = librespot_get_status();
         icons_put(0, 0, librespot_status_to_icon(librespot_status));
+        icons_put(75, 0, bt_is_connected() ? ICON_BLUETOOTH_CONNECTED : ICON_BLUETOOTH_DISCONNECTED);
         wifi_status = get_wifi_status();
         icons_put(100, 0, wifi_status_to_icon(wifi_status));
 

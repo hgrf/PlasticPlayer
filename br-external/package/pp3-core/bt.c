@@ -29,6 +29,9 @@ static unsigned int devices_iter(GVariant *managed_objects, bt_device_t *devices
                         if (strcmp(property_name, "Address") == 0) {
                             g_variant_get(property_value, "s", &devices[ret].mac);
                         }
+                        if (strcmp(property_name, "Connected") == 0) {
+                            devices[ret].connected = g_variant_get_boolean(property_value);
+                        }
                         g_variant_unref(property_value);
                         g_free(property_name);
                     }
@@ -149,4 +152,15 @@ int bt_device_connect(const char *id) {
     g_object_unref(connection);
 
     return 0;
+}
+
+bool bt_is_connected(void) {
+    bool ret = false;
+    bt_device_t *devices = NULL;
+    int count = bt_device_list_get(&devices);
+    for (int i = 0; i < count; i++) {
+        ret |= devices[i].connected;
+    }
+    bt_device_list_free(devices, count);
+    return ret;
 }

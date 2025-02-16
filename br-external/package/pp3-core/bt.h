@@ -5,6 +5,7 @@ typedef struct {
     char *id;   //< library-internal identifier (in this case DBus object path)
     char *name; //< user-friendly name
     char *mac;  //< MAC address
+    bool connected;
 } bt_device_t;
 
 /**
@@ -28,5 +29,11 @@ void bt_device_list_free(bt_device_t *devices, int count);
  * @return     status code (0 on success, -1 on error)
  */
 int bt_device_connect(const char *id);
+
+/**
+ * @brief      Checks if we are connected to at least one bluetooth device.
+ * @return     bool
+ */
+bool bt_is_connected(void);
 
 #endif // BT_H
