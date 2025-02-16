@@ -100,7 +100,7 @@ static NDEFMessage search_and_read_tag() {
     uint8_t version;
     ntag21x_capability_container_t type_s;
 
-    res = ntag21x_basic_search(&type_s, id, 1);
+    res = ntag21x_basic_search(&type_s, id, 0);
     if (res != 0) {
         ntag21x_interface_debug_print("ntag21x: search failed: %d\n", res);
         if (mfrc522_get_version(g_mfrc522_handle, &reader_id, &version) != 0) {
