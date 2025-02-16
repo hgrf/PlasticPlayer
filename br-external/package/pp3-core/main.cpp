@@ -88,7 +88,7 @@ static int read_pages(uint8_t start_page, uint8_t page_count, uint8_t *data) {
  * @brief      search and read tag
  * @return     NDEF message
  */
-static NDEFMessage search_and_read_tag() {
+static NDEFMessage search_and_read_tag(uint8_t serial[7]) {
     uint8_t res;
     uint8_t i;
     uint8_t id[8];
@@ -116,11 +116,13 @@ static NDEFMessage search_and_read_tag() {
         return NDEFMessage();
     }
 
-    ntag21x_interface_debug_print("ntag21x: id is ");
-    for (i = 0; i < 8; i++) {
-        ntag21x_interface_debug_print("0x%02X ", id[i]);
+    ntag21x_interface_debug_print("ntag21x: serial number is ");
+    for (i = 1; i < 8; i++) {
+        ntag21x_interface_debug_print("%02x ", id[i]);
     }
     ntag21x_interface_debug_print("\n");
+
+    memcpy(serial, id + 1, 7);
 
     // read message length from page 4, byte 0 should be 0x03, byte 1 is the length
     // c.f. https://github.com/TheNitek/NDEF/blob/f72cf58a705ead36c1014d091da9dcb71670cdb7/src/MifareUltralight.cpp#L127
@@ -190,8 +192,28 @@ static void load_uri(const std::string& uri) {
 }
 
 static void tag_reader_thread_entry(void) {
+    uint8_t prev_serial[7] = {0};
+    uint8_t serial[7];
     while(g_is_running) {
-        NDEFMessage msg = search_and_read_tag();
+        if (ntag21x_basic_get_serial_number(serial) == 0) {
+            printf("Serial number: ");
+            for (int i = 0; i < sizeof(serial); i++) {
+                printf("%02x", serial[i]);
+            }
+            printf("\n");
+            if (memcmp(prev_serial, serial, sizeof(prev_serial)) == 0) {
+                printf("Tag has not changed.\n");
+                fflush(stdout);
+                usleep(200000);
+                continue;
+            }
+            memcpy(prev_serial, serial, sizeof(prev_serial));
+        } else {
+            printf("Failed to read serial number.\n");
+            memset(prev_serial, 0, sizeof(prev_serial));
+        }
+
+        NDEFMessage msg = search_and_read_tag(prev_serial);
         if (msg.is_valid()) {
             std::cout << "NDEF message is valid and has " << msg.record_count() << " records" << std::endl;
             g_tag_remove_counter = 0;
