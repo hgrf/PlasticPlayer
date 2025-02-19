@@ -30,6 +30,23 @@ void (*g_ndef_msg_cb)(uint8_t *msg, unsigned int len);
 void (*g_tag_removed_cb)(void);
 static int g_tag_remove_counter;
 
+static void error_trace(void) {
+    uint8_t reader_id;
+    uint8_t version;
+    uint8_t err;
+
+    if (mfrc522_get_version(g_mfrc522_handle, &reader_id, &version) != 0) {
+        LOG_ERROR("failed to get version");
+    } else if (reader_id != 0x09) {
+        LOG_ERROR("invalid reader ID: 0x%02X", reader_id);
+    }
+    if (mfrc522_get_error(g_mfrc522_handle, &err) != 0) {
+        LOG_ERROR("failed to get error register");
+    } else {
+        LOG_WARNING("error register: 0x%02x", err);
+    }
+}
+
 /**
  * @brief      read four pages and print data
  *             NOTE: The low-level implementation (c.f. ntag21x_read_page) reads
@@ -47,6 +64,7 @@ static int g_tag_remove_counter;
 
     if (res != 0) {
         LOG_WARNING("read failed: %d", res);
+        error_trace();
         return 1;
     }
 
@@ -103,23 +121,12 @@ static int g_tag_remove_counter;
     uint8_t data[496];
     uint8_t len;
     uint8_t page_count;
-    uint8_t reader_id;
-    uint8_t version;
     ntag21x_capability_container_t type_s;
 
     res = ntag21x_basic_search(&type_s, id, 0);
     if (res != 0) {
         LOG_WARNING("search failed: %d", res);
-        if (mfrc522_get_version(g_mfrc522_handle, &reader_id, &version) != 0) {
-            LOG_ERROR("failed to get version");
-        } else if (reader_id != 0x09) {
-            LOG_ERROR("invalid reader ID: 0x%02X", reader_id);
-        }
-        if (mfrc522_get_error(g_mfrc522_handle, &res) != 0) {
-            LOG_ERROR("failed to get error register");
-        } else {
-            LOG_WARNING("error register: 0x%02X", res);
-        }
+        error_trace();
         return 1;
     }
 
@@ -184,6 +191,7 @@ static void *tag_reader_thread_entry(void *) {
             memcpy(prev_serial, serial, sizeof(prev_serial));
         } else {
             LOG_WARNING("failed to read serial number");
+            error_trace();
             memset(prev_serial, 0, sizeof(prev_serial));
         }
 
