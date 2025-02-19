@@ -7,6 +7,9 @@
 #include <driver_ntag21x_basic.h>
 #include <driver_mfrc522_basic.h>
 
+#include "log.h"
+static const char *TAG = "nfc";
+
 #define NDEF_START_PAGE 4
 #define PAGE_SIZE 4
 
@@ -40,23 +43,23 @@ static int g_tag_remove_counter;
     uint8_t res = ntag21x_basic_read(page, data);
 
     if (res != 0) {
-        ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
+        LOG_WARNING("read failed: %d", res);
         return 1;
     }
 
     /* output */
-    ntag21x_interface_debug_print("ntag21x: read page %d: ", page);
+    printf("page 0x%02x: ", page);
     for (i = 0; i < 4; i++) {
-        ntag21x_interface_debug_print("0x%02X ", data[i]);
+        printf("0x%02X ", data[i]);
     }
     for (i = 0; i < 4; i++) {
         if (data[i] < 0x20 || data[i] > 0x7E) {
-            ntag21x_interface_debug_print(".");
+            printf(".");
         } else {
-            ntag21x_interface_debug_print("%c", data[i]);
+            printf("%c", data[i]);
         }
     }
-    ntag21x_interface_debug_print("\n");
+    printf("\n");
 
     return 0;
 }
@@ -104,25 +107,25 @@ static int g_tag_remove_counter;
 
     res = ntag21x_basic_search(&type_s, id, 0);
     if (res != 0) {
-        ntag21x_interface_debug_print("ntag21x: search failed: %d\n", res);
+        LOG_WARNING("search failed: %d", res);
         if (mfrc522_get_version(g_mfrc522_handle, &reader_id, &version) != 0) {
-            ntag21x_interface_debug_print("ntag21x: failed to get version\n");
+            LOG_ERROR("failed to get version");
         } else if (reader_id != 0x09) {
-            ntag21x_interface_debug_print("ntag21x: invalid reader ID: 0x%02X\n", reader_id);
+            LOG_ERROR("invalid reader ID: 0x%02X", reader_id);
         }
         if (mfrc522_get_error(g_mfrc522_handle, &res) != 0) {
-            ntag21x_interface_debug_print("ntag21x: failed to get error register\n");
+            LOG_ERROR("failed to get error register");
         } else {
-            ntag21x_interface_debug_print("ntag21x: error register: 0x%02X\n", res);
+            LOG_WARNING("error register: 0x%02X", res);
         }
         return 1;
     }
 
-    ntag21x_interface_debug_print("ntag21x: serial number is ");
+    printf("serial number is ");
     for (i = 1; i < 8; i++) {
-        ntag21x_interface_debug_print("%02x ", id[i]);
+        printf("%02x ", id[i]);
     }
-    ntag21x_interface_debug_print("\n");
+    printf("\n");
 
     memcpy(serial, id + 1, 7);
 
@@ -130,7 +133,6 @@ static int g_tag_remove_counter;
     // c.f. https://github.com/TheNitek/NDEF/blob/f72cf58a705ead36c1014d091da9dcb71670cdb7/src/MifareUltralight.cpp#L127
     res = read_page(NDEF_START_PAGE, data);
     if (res != 0) {
-        ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
         return 1;
     }
 
@@ -142,13 +144,12 @@ static int g_tag_remove_counter;
         i = 1;
         res = read_page(page, data);
         if (res != 0) {
-            ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
             return 1;
         }
     }
 
     if (data[i] != TLV_TAG_FIELD_NDEF) {
-        ntag21x_interface_debug_print("ntag21x: invalid NDEF message start byte: 0x%02X\n", data[0]);
+        LOG_ERROR("invalid NDEF message start byte: 0x%02X", data[0]);
         return 1;
     }
 
@@ -158,7 +159,6 @@ static int g_tag_remove_counter;
     page++;
     res = read_pages(page, page_count - 1, data + PAGE_SIZE);
     if (res != 0) {
-        ntag21x_interface_debug_print("ntag21x: read failed: %d\n", res);
         return 1;
     }
 
@@ -176,19 +176,19 @@ static void *tag_reader_thread_entry(void *) {
     uint8_t serial[7];
     while(g_is_running) {
         if (ntag21x_basic_get_serial_number(serial) == 0) {
-            printf("Serial number: ");
+            printf("serial number: ");
             for (int i = 0; i < sizeof(serial); i++) {
                 printf("%02x", serial[i]);
             }
             printf("\n");
             if (memcmp(prev_serial, serial, sizeof(prev_serial)) == 0) {
-                printf("Tag has not changed.\n");
+                LOG_INFO("tag has not changed");
                 usleep(200000);
                 continue;
             }
             memcpy(prev_serial, serial, sizeof(prev_serial));
         } else {
-            printf("Failed to read serial number.\n");
+            LOG_WARNING("failed to read serial number");
             memset(prev_serial, 0, sizeof(prev_serial));
         }
 
