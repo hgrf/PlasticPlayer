@@ -28,7 +28,6 @@ static bool g_is_running = true;
 static mfrc522_handle_t *g_mfrc522_handle;
 void (*g_ndef_msg_cb)(uint8_t *msg, unsigned int len);
 void (*g_tag_removed_cb)(void);
-static int g_tag_remove_counter;
 
 static void error_trace(void) {
     uint8_t reader_id;
@@ -136,8 +135,6 @@ static void error_trace(void) {
     }
     printf("\n");
 
-    memcpy(serial, id + 1, 7);
-
     // read message length from page 4, byte 0 should be 0x03, byte 1 is the length
     // c.f. https://github.com/TheNitek/NDEF/blob/f72cf58a705ead36c1014d091da9dcb71670cdb7/src/MifareUltralight.cpp#L127
     res = read_four_pages(NDEF_START_PAGE, data);
@@ -164,45 +161,59 @@ static void error_trace(void) {
         return 1;
     }
 
-    g_tag_remove_counter = 0;
     if (g_ndef_msg_cb != NULL) {
         g_ndef_msg_cb(data + i + 1, len);
     }
+
+    memcpy(serial, id + 1, 7);
 
     return 0;
 }
 
 static void *tag_reader_thread_entry(void *) {
-    int res;
+    bool tag_present = false;
+    unsigned int retry = 0;
     uint8_t prev_serial[7] = {0};
     uint8_t serial[7];
     while(g_is_running) {
-        if (ntag21x_basic_get_serial_number(serial) == 0) {
-            printf("serial number: ");
-            for (int i = 0; i < sizeof(serial); i++) {
-                printf("%02x", serial[i]);
+        if (tag_present) {
+            if (ntag21x_basic_get_serial_number(serial) == 0) {
+                retry = 0;
+                printf("serial number: ");
+                for (int i = 0; i < sizeof(serial); i++) {
+                    printf("%02x", serial[i]);
+                }
+                printf("\n");
+                if (memcmp(prev_serial, serial, sizeof(prev_serial)) == 0) {
+                    LOG_INFO("tag has not changed");
+                } else {
+                    memset(prev_serial, 0, sizeof(prev_serial));
+                    tag_present = false;
+                    if (g_tag_removed_cb != NULL) {
+                        g_tag_removed_cb();
+                    }
+                }
+            } else {
+                LOG_WARNING("failed to read serial number, retry: %d", retry);
+                error_trace();
+                if (retry >= 3) {
+                    memset(prev_serial, 0, sizeof(prev_serial));
+                    tag_present = false;
+                    retry = 0;
+                    if (g_tag_removed_cb != NULL) {
+                        g_tag_removed_cb();
+                    }
+                } else {
+                    retry++;
+                }
             }
-            printf("\n");
-            if (memcmp(prev_serial, serial, sizeof(prev_serial)) == 0) {
-                LOG_INFO("tag has not changed");
-                usleep(200000);
-                continue;
-            }
-            memcpy(prev_serial, serial, sizeof(prev_serial));
         } else {
-            LOG_WARNING("failed to read serial number");
-            error_trace();
-            memset(prev_serial, 0, sizeof(prev_serial));
-        }
-
-        res = search_and_read_tag(prev_serial);
-        if (res != 0) {
-            if (g_tag_remove_counter == 3 && g_tag_removed_cb) {
-                g_tag_removed_cb();
-            } else if (g_tag_remove_counter < 3) {
-                g_tag_remove_counter++;
+            if(search_and_read_tag(prev_serial) == 0) {
+                tag_present = true;
+                retry = 0;
             }
         }
+        usleep(200000);
     }
 
     return NULL;
