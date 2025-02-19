@@ -31,16 +31,19 @@ void (*g_tag_removed_cb)(void);
 static int g_tag_remove_counter;
 
 /**
- * @brief      read page and print data
- * @param[in]  page is the read page
+ * @brief      read four pages and print data
+ *             NOTE: The low-level implementation (c.f. ntag21x_read_page) reads
+ *             four pages anyway, so there is no reason not to pass this data to
+ *             the application level.
+ * @param[in]  page is the first page
  * @param[out] *data points to a data buffer
  * @return     status code
  *             - 0 success
  *             - 1 read failed
  */
- static int read_page(uint8_t page, uint8_t data[4]) {
+ static int read_four_pages(uint8_t page, uint8_t data[16]) {
     uint8_t i;
-    uint8_t res = ntag21x_basic_read(page, data);
+    uint8_t res = ntag21x_basic_read_four_pages(page, data);
 
     if (res != 0) {
         LOG_WARNING("read failed: %d", res);
@@ -48,11 +51,11 @@ static int g_tag_remove_counter;
     }
 
     /* output */
-    printf("page 0x%02x: ", page);
-    for (i = 0; i < 4; i++) {
-        printf("0x%02X ", data[i]);
+    printf("pages 0x%02x-%02x: ", page, page + 4);
+    for (i = 0; i < 4 * PAGE_SIZE; i++) {
+        printf("%02x ", data[i]);
     }
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4 * PAGE_SIZE; i++) {
         if (data[i] < 0x20 || data[i] > 0x7E) {
             printf(".");
         } else {
@@ -77,8 +80,8 @@ static int g_tag_remove_counter;
     uint8_t res;
     uint8_t i;
 
-    for (i = 0; i < page_count; i++) {
-        res = read_page(start_page + i, data + i * PAGE_SIZE);
+    for (i = 0; i < page_count; i += 4) {
+        res = read_four_pages(start_page + i, data + i * PAGE_SIZE);
         if (res != 0) {
             return 1;
         }
@@ -99,7 +102,6 @@ static int g_tag_remove_counter;
     uint8_t id[8];
     uint8_t data[496];
     uint8_t len;
-    uint8_t page;
     uint8_t page_count;
     uint8_t reader_id;
     uint8_t version;
@@ -123,7 +125,7 @@ static int g_tag_remove_counter;
 
     printf("serial number is ");
     for (i = 1; i < 8; i++) {
-        printf("%02x ", id[i]);
+        printf("%02x", id[i]);
     }
     printf("\n");
 
@@ -131,33 +133,26 @@ static int g_tag_remove_counter;
 
     // read message length from page 4, byte 0 should be 0x03, byte 1 is the length
     // c.f. https://github.com/TheNitek/NDEF/blob/f72cf58a705ead36c1014d091da9dcb71670cdb7/src/MifareUltralight.cpp#L127
-    res = read_page(NDEF_START_PAGE, data);
+    res = read_four_pages(NDEF_START_PAGE, data);
     if (res != 0) {
         return 1;
     }
 
-    page = NDEF_START_PAGE;
     i = 0;
     if (data[i] == TLV_TAG_FIELD_LOCK_CTRL) {
         // the value of this TLV consists of 3 bytes, so the next TLV starts on page 5 byte 1
-        page++;
-        i = 1;
-        res = read_page(page, data);
-        if (res != 0) {
-            return 1;
-        }
+        i += PAGE_SIZE + 1;
     }
 
     if (data[i] != TLV_TAG_FIELD_NDEF) {
-        LOG_ERROR("invalid NDEF message start byte: 0x%02X", data[0]);
+        LOG_ERROR("invalid NDEF message start byte: 0x%02x", data[0]);
         return 1;
     }
 
     i++;
     len = data[i];
     page_count = (len + i + 1) / PAGE_SIZE + ((len + i + 1) % PAGE_SIZE ? 1 : 0);
-    page++;
-    res = read_pages(page, page_count - 1, data + PAGE_SIZE);
+    res = read_pages(NDEF_START_PAGE + 4, page_count - 4, data + 4 * PAGE_SIZE);
     if (res != 0) {
         return 1;
     }
