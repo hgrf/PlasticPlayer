@@ -179,14 +179,8 @@ static void *tag_reader_thread_entry(void *) {
         if (tag_present) {
             if (ntag21x_basic_get_serial_number(serial) == 0) {
                 retry = 0;
-                printf("serial number: ");
-                for (int i = 0; i < sizeof(serial); i++) {
-                    printf("%02x", serial[i]);
-                }
-                printf("\n");
-                if (memcmp(prev_serial, serial, sizeof(prev_serial)) == 0) {
-                    LOG_INFO("tag has not changed");
-                } else {
+                if (memcmp(prev_serial, serial, sizeof(prev_serial)) != 0) {
+                    LOG_WARNING("serial number has changed, clearing previous tag");
                     memset(prev_serial, 0, sizeof(prev_serial));
                     tag_present = false;
                     if (g_tag_removed_cb != NULL) {
