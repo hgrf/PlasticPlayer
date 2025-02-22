@@ -331,7 +331,7 @@ void ui_process(void) {
     ITEM *cur;
     void (*p)(void);
     bt_device_t *bt_device;
-    struct timespec timeout = { 0, 200000 };
+    struct timespec timeout = { 0, 200000000 };
     wifi_status_t wifi_status;
     librespot_status_t librespot_status;
 
