@@ -46,6 +46,7 @@ static SCREEN *g_scr;
 static MENU *g_menu;
 static MENU *g_menu_bt;
 static WINDOW *g_menu_win;
+static WINDOW *g_status_win;
 static ITEM **g_menu_items;
 static unsigned int g_bt_devices_count;
 static bt_device_t *g_bt_devices;
@@ -287,6 +288,8 @@ int ui_init(void) {
         return -1;
     }
 
+    g_status_win = newwin(4, WINDOW_WIDTH, 4, 0);
+
     return 0;
 }
 
@@ -308,7 +311,7 @@ static void print_scrolling(int row, const char *text)
 
     len = strlen(text);
     if (len <= WINDOW_WIDTH) {
-        mvwprintw(g_menu_win, row, 0, "%s", text);
+        mvwprintw(g_status_win, row, 0, "%s", text);
         return;
     }
 
@@ -320,7 +323,7 @@ static void print_scrolling(int row, const char *text)
         scroll_pos = 0;
     if (scroll_pos > len - WINDOW_WIDTH)
         scroll_pos = len - WINDOW_WIDTH;
-    mvwprintw(g_menu_win, row, 0, "%.16s", &text[scroll_pos]);
+    mvwprintw(g_status_win, row, 0, "%.16s", &text[scroll_pos]);
 }
 
 void ui_process(void) {
@@ -405,14 +408,8 @@ void ui_process(void) {
                     g_last_ts_all = 0;
                 }
             } else {
-                icons_clear();
-                werase(g_menu_win);
-
-                /* Print a border around the main window */
+                clearok(g_menu_win, TRUE);
                 box(g_menu_win, 0, 0);
-                refresh();
-
-                /* Post the menu */
                 post_menu(g_menu);
                 wrefresh(g_menu_win);
 
@@ -421,24 +418,22 @@ void ui_process(void) {
         }
     } else if (res == 0 && millis() > g_last_ts_all + MENU_TIMEOUT_MS) {
         /* timeout occured, show status screen */
-        if (g_current_menu == CURRENT_MENU_MAIN) {
-            unpost_menu(g_menu);
-        } else if (g_current_menu == CURRENT_MENU_BT) {
+        if (g_current_menu == CURRENT_MENU_BT) {
             menu_bt_deinit();
         }
-        werase(g_menu_win);
-
         librespot_status = librespot_get_status();
         icons_put(0, 0, librespot_status_to_icon(librespot_status));
         icons_put(75, 0, bt_is_connected() ? ICON_BLUETOOTH_CONNECTED : ICON_BLUETOOTH_DISCONNECTED);
         wifi_status = get_wifi_status();
         icons_put(100, 0, wifi_status_to_icon(wifi_status));
-
+        icons_sync();
+        
+        werase(g_status_win);
         pthread_mutex_lock(&g_mutex);
-        print_scrolling(4, g_artists);
-        print_scrolling(5, g_album);
-        print_scrolling(6, g_title);
-        wrefresh(g_menu_win);
+        print_scrolling(0, g_artists);
+        print_scrolling(1, g_album);
+        print_scrolling(2, g_title);
+        wrefresh(g_status_win);
         pthread_mutex_unlock(&g_mutex);
 
         g_current_menu = CURRENT_MENU_NONE;

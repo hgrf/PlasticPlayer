@@ -69,12 +69,17 @@ int icons_init(void) {
     }
 
     g_screen_size = screen_info.xres * screen_info.yres * screen_info.bits_per_pixel / 8;
-    g_display = (uint8_t *) mmap(0, g_screen_size, PROT_READ | PROT_WRITE, MAP_SHARED, g_fb_fd, 0);
-    if (g_display == MAP_FAILED) {
-        perror("mmap failed.\n");
-        close(g_fb_fd);
-        return -1;
-    }
+    // NOTE: Instead of using a memory-mapped buffer, we write directly to the framebuffer FB with
+    //       icons_sync(), because I have not yet figured out how to force the display to be updated
+    //       immediately with the memory-mapped buffer, and the refresh rate of 1 Hz (see ssd1307fb
+    //       driver) is too laggy.
+    g_display = malloc(g_screen_size);
+    // g_display = (uint8_t *) mmap(0, g_screen_size, PROT_READ | PROT_WRITE, MAP_SHARED, g_fb_fd, 0);
+    // if (g_display == MAP_FAILED) {
+    //     perror("mmap failed.\n");
+    //     close(g_fb_fd);
+    //     return -1;
+    // }
 
     g_screen_width = screen_info.xres;
     g_screen_height = screen_info.yres;
@@ -137,9 +142,15 @@ void icons_clear(void) {
     memset(g_display, 0, g_screen_size);
 }
 
+void icons_sync(void) {
+    write(g_fb_fd, g_display, g_screen_size / 2);
+    close(g_fb_fd);
+    g_fb_fd = open(FB_DEV, O_RDWR);
+}
+
 void icons_deinit(void) {
     FT_Done_Face(g_face);
     FT_Done_FreeType(g_library);
-    munmap(g_display, g_screen_size);
+    // munmap(g_display, g_screen_size);
     close(g_fb_fd);
 }

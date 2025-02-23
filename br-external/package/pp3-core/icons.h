@@ -13,6 +13,7 @@
 int icons_init(void);
 void icons_put(int x, int y, unsigned icon);
 void icons_clear(void);
+void icons_sync(void);
 void icons_deinit(void);
 
 #endif // ICONS_H
