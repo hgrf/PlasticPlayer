@@ -109,6 +109,80 @@ static void error_trace(void) {
 }
 
 /**
+ * @brief      basic example search
+ * @param[out] *type points to a type buffer
+ * @param[out] *id points to an id buffer
+ * @param[in]  timeout is the check times
+ * @return     status code
+ *             - 0 success
+ *             - 1 timeout
+ * @note       none
+ */
+static uint8_t search_tag(ntag21x_capability_container_t *type, uint8_t id[8], int32_t timeout)
+{
+    uint8_t res;
+    ntag21x_type_t t;
+    
+    /* loop */
+    while (1)
+    {
+        /* request */
+        res = ntag21x_request(g_ntag21x_handle, &t);
+        if (res == 0)
+        {
+            /* anti collision_cl1 */
+            res = ntag21x_anticollision_cl1(g_ntag21x_handle, id);
+            if (res == 0)
+            {
+                /* cl1 */
+                res = ntag21x_select_cl1(g_ntag21x_handle, id);
+                if (res == 0)
+                {
+                    /* anti collision_cl2 */
+                    res = ntag21x_anticollision_cl2(g_ntag21x_handle, id + 4);
+                    if (res == 0)
+                    {
+                        /* cl2 */
+                        res = ntag21x_select_cl2(g_ntag21x_handle, id + 4);
+                        if (res == 0)
+                        {
+                            res = ntag21x_get_capability_container(g_ntag21x_handle, type);
+                            if (res == 0)
+                            {
+                                return 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        /* delay */
+        ntag21x_interface_delay_ms(MIFARE_NTAG21X_DEFAULT_SEARCH_DELAY_MS);
+        
+        /* check the timeout */
+        if (timeout < 0)
+        {
+            /* never timeout */
+            continue;
+        }
+        else
+        {
+            /* timeout */
+            if (timeout == 0)
+            {
+                return 1;
+            }
+            else
+            {
+                /* timout-- */
+                timeout--;
+            }
+        }
+    }
+}
+
+/**
  * @brief      search and read tag
  * @return     status code
  *             - 0 success
@@ -123,7 +197,7 @@ static void error_trace(void) {
     uint8_t page_count;
     ntag21x_capability_container_t type_s;
 
-    res = ntag21x_basic_search(&type_s, id, 0);
+    res = search_tag(&type_s, id, 0);
     if (res != 0) {
         LOG_WARNING("search failed: %d", res);
         error_trace();
