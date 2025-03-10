@@ -118,68 +118,43 @@ static void error_trace(void) {
  *             - 1 timeout
  * @note       none
  */
-static uint8_t search_tag(ntag21x_capability_container_t *type, uint8_t id[8], int32_t timeout)
+static uint8_t search_tag(ntag21x_capability_container_t *type, uint8_t id[8])
 {
     uint8_t res;
     ntag21x_type_t t;
     
-    /* loop */
-    while (1)
+    /* request */
+    res = ntag21x_request(g_ntag21x_handle, &t);
+    if (res == 0)
     {
-        /* request */
-        res = ntag21x_request(g_ntag21x_handle, &t);
+        /* anti collision_cl1 */
+        res = ntag21x_anticollision_cl1(g_ntag21x_handle, id);
         if (res == 0)
         {
-            /* anti collision_cl1 */
-            res = ntag21x_anticollision_cl1(g_ntag21x_handle, id);
+            /* cl1 */
+            res = ntag21x_select_cl1(g_ntag21x_handle, id);
             if (res == 0)
             {
-                /* cl1 */
-                res = ntag21x_select_cl1(g_ntag21x_handle, id);
+                /* anti collision_cl2 */
+                res = ntag21x_anticollision_cl2(g_ntag21x_handle, id + 4);
                 if (res == 0)
                 {
-                    /* anti collision_cl2 */
-                    res = ntag21x_anticollision_cl2(g_ntag21x_handle, id + 4);
+                    /* cl2 */
+                    res = ntag21x_select_cl2(g_ntag21x_handle, id + 4);
                     if (res == 0)
                     {
-                        /* cl2 */
-                        res = ntag21x_select_cl2(g_ntag21x_handle, id + 4);
+                        res = ntag21x_get_capability_container(g_ntag21x_handle, type);
                         if (res == 0)
                         {
-                            res = ntag21x_get_capability_container(g_ntag21x_handle, type);
-                            if (res == 0)
-                            {
-                                return 0;
-                            }
+                            return 0;
                         }
                     }
                 }
             }
         }
-        
-        /* delay */
-        ntag21x_interface_delay_ms(MIFARE_NTAG21X_DEFAULT_SEARCH_DELAY_MS);
-        
-        /* check the timeout */
-        if (timeout < 0)
-        {
-            /* never timeout */
-            continue;
-        }
-        else
-        {
-            /* timeout */
-            if (timeout == 0)
-            {
-                return 1;
-            }
-            else
-            {
-                /* timout-- */
-                timeout--;
-            }
-        }
     }
+
+    return 1;
 }
 
 /**
@@ -197,7 +172,7 @@ static uint8_t search_tag(ntag21x_capability_container_t *type, uint8_t id[8], i
     uint8_t page_count;
     ntag21x_capability_container_t type_s;
 
-    res = search_tag(&type_s, id, 0);
+    res = search_tag(&type_s, id);
     if (res != 0) {
         LOG_WARNING("search failed: %d", res);
         error_trace();
