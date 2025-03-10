@@ -1,0 +1,39 @@
+diff --git a/example/driver_ntag21x_basic.c b/example/driver_ntag21x_basic.c
+index dfc20d1..433850d 100644
+--- a/example/driver_ntag21x_basic.c
++++ b/example/driver_ntag21x_basic.c
+@@ -106,6 +106,16 @@ uint8_t ntag21x_basic_deinit(void)
+     return 0;
+ }
+ 
++/**
++ * @brief  basic example get handle
++ * @return handle
++ * @note   none
++ */
++ntag21x_handle_t* ntag21x_basic_get_handle(void)
++{
++    return &gs_handle;
++}
++
+ /**
+  * @brief  basic example halt
+  * @return status code
+diff --git a/example/driver_ntag21x_basic.h b/example/driver_ntag21x_basic.h
+index 0e7f93e..77b7b56 100644
+--- a/example/driver_ntag21x_basic.h
++++ b/example/driver_ntag21x_basic.h
+@@ -73,6 +73,13 @@ uint8_t ntag21x_basic_init(void);
+  */
+ uint8_t ntag21x_basic_deinit(void);
+ 
++/**
++ * @brief  basic example get handle
++ * @return handle
++ * @note   none
++ */
++ntag21x_handle_t* ntag21x_basic_get_handle(void);
++
+ /**
+  * @brief  basic example halt
+  * @return status code
