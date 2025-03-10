@@ -123,38 +123,43 @@ static uint8_t search_tag(ntag21x_capability_container_t *type, uint8_t id[8])
     uint8_t res;
     ntag21x_type_t t;
     
-    /* request */
     res = ntag21x_request(g_ntag21x_handle, &t);
-    if (res == 0)
-    {
-        /* anti collision_cl1 */
-        res = ntag21x_anticollision_cl1(g_ntag21x_handle, id);
-        if (res == 0)
-        {
-            /* cl1 */
-            res = ntag21x_select_cl1(g_ntag21x_handle, id);
-            if (res == 0)
-            {
-                /* anti collision_cl2 */
-                res = ntag21x_anticollision_cl2(g_ntag21x_handle, id + 4);
-                if (res == 0)
-                {
-                    /* cl2 */
-                    res = ntag21x_select_cl2(g_ntag21x_handle, id + 4);
-                    if (res == 0)
-                    {
-                        res = ntag21x_get_capability_container(g_ntag21x_handle, type);
-                        if (res == 0)
-                        {
-                            return 0;
-                        }
-                    }
-                }
-            }
-        }
+    if (res != 0) {
+        LOG_WARNING("ntag21x_request failed: %d", res);
+        return res;
     }
 
-    return 1;
+    res = ntag21x_anticollision_cl1(g_ntag21x_handle, id);
+    if (res != 0) {
+        LOG_WARNING("ntag21x_anticollision_cl1 failed: %d", res);
+        return res;
+    }
+
+    res = ntag21x_select_cl1(g_ntag21x_handle, id);
+    if (res != 0) {
+        LOG_WARNING("ntag21x_select_cl1 failed: %d", res);
+        return res;
+    }
+
+    res = ntag21x_anticollision_cl2(g_ntag21x_handle, id + 4);
+    if (res != 0) {
+        LOG_WARNING("ntag21x_anticollision_cl2 failed: %d", res);
+        return res;
+    }
+
+    res = ntag21x_select_cl2(g_ntag21x_handle, id + 4);
+    if (res != 0) {
+        LOG_WARNING("ntag21x_select_cl2 failed: %d", res);
+        return res;
+    }
+
+    res = ntag21x_get_capability_container(g_ntag21x_handle, type);
+    if (res != 0) {
+        LOG_WARNING("ntag21x_get_capability_container failed: %d", res);
+        return res;
+    }
+
+    return 0;
 }
 
 /**
@@ -174,7 +179,6 @@ static uint8_t search_tag(ntag21x_capability_container_t *type, uint8_t id[8])
 
     res = search_tag(&type_s, id);
     if (res != 0) {
-        LOG_WARNING("search failed: %d", res);
         error_trace();
         return 1;
     }
