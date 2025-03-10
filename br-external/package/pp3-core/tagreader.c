@@ -25,6 +25,7 @@ typedef enum {
 
 static pthread_t g_thread;
 static bool g_is_running = true;
+static ntag21x_handle_t *g_ntag21x_handle;
 static mfrc522_handle_t *g_mfrc522_handle;
 void (*g_ndef_msg_cb)(uint8_t *msg, unsigned int len);
 void (*g_tag_removed_cb)(void);
@@ -224,6 +225,7 @@ int tag_reader_init(void (*ndef_msg_cb)(uint8_t *msg, unsigned int len), void (*
         return 1;
     }
 
+    g_ntag21x_handle = ntag21x_basic_get_handle();
     g_mfrc522_handle = mfrc522_basic_get_handle();
 
     // default minimum reception level is 8 vs. collision level 4
