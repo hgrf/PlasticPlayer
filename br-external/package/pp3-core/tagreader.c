@@ -123,9 +123,15 @@ static uint8_t search_tag(ntag21x_capability_container_t *type, uint8_t id[8])
     uint8_t res;
     ntag21x_type_t t;
     
-    res = ntag21x_request(g_ntag21x_handle, &t);
+    res = ntag21x_halt(g_ntag21x_handle);
     if (res != 0) {
-        LOG_WARNING("ntag21x_request failed: %d", res);
+        LOG_WARNING("ntag21x_halt failed: %d", res);
+        return res;
+    }
+
+    res = ntag21x_wake_up(g_ntag21x_handle, &t);
+    if (res != 0) {
+        LOG_WARNING("ntag21x_wake_up failed: %d", res);
         return res;
     }
 
